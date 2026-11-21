@@ -1140,7 +1140,8 @@ class Database:
             ).fetchone()
             return dict(row) if row else None
 
-    def upsert_party(self, data: Mapping[str, Any], party_id: int | None = None) -> int:
+    def _party_upsert_payload(self, data: Mapping[str, Any]) -> tuple[dict[str, Any], str, str]:
+        """Normalizirani podatki stranke za upsert_party (enaka pravila kot prej; samo izločeno)."""
         raw_vat, mm_from_vat = split_vat_and_mm_code(data.get("vat_id"))
         vat = normalize_vat_id(raw_vat)
         mm_code = normalize_text(data.get("minimax_code")) or mm_from_vat
@@ -1199,6 +1200,49 @@ class Database:
                 payload["name"] = f"{base_name} [DS:{tax}]"
             if payload["minimax_code"] and "sync_status" not in data:
                 payload["sync_status"] = "synced"
+        return payload, tax, vat
+
+    @staticmethod
+    def _match_existing_party(conn: sqlite3.Connection, payload: Mapping[str, Any], tax: str, vat: str) -> Any:
+        """Pravila ujemanja obstoječe stranke (Minimax šifra → davčna/ID za DDV → ID za DDV + naziv). Nespremenjeno."""
+        existing = None
+        code = payload["minimax_code"]
+        if code:
+            existing = conn.execute(
+                "SELECT id FROM parties WHERE minimax_code=? ORDER BY id LIMIT 1",
+                (code,),
+            ).fetchone()
+        if existing is None and (tax or vat):
+            existing = conn.execute(
+                """
+                SELECT id FROM parties
+                WHERE (? <> '' AND tax_number = ?) OR (? <> '' AND vat_id = ?)
+                ORDER BY id LIMIT 1
+                """,
+                (tax, tax, vat, vat),
+            ).fetchone()
+        if existing is None and payload["name"]:
+            existing = conn.execute(
+                "SELECT id FROM parties WHERE vat_id=? AND name=? ORDER BY id LIMIT 1",
+                (payload["vat_id"], payload["name"]),
+            ).fetchone()
+        return existing
+
+    def find_existing_party(self, data: Mapping[str, Any]) -> dict[str, Any] | None:
+        """Samo branje: katero obstoječo stranko bi upsert_party(data) brez ID posodobil (za opozorilo v UI)."""
+        payload, tax, vat = self._party_upsert_payload(data)
+        with self.session() as conn:
+            existing = self._match_existing_party(conn, payload, tax, vat)
+            if existing is None:
+                return None
+            row = conn.execute(
+                "SELECT id, name, vat_id, tax_number, city, minimax_code, sync_status FROM parties WHERE id=?",
+                (int(existing["id"]),),
+            ).fetchone()
+            return dict(row) if row else None
+
+    def upsert_party(self, data: Mapping[str, Any], party_id: int | None = None) -> int:
+        payload, tax, vat = self._party_upsert_payload(data)
 
         def _merge_minimax(conn: sqlite3.Connection, existing_id: int) -> None:
             if payload["minimax_code"]:
@@ -1262,27 +1306,7 @@ class Database:
             if party_id:
                 return _apply_update(conn, int(party_id))
 
-            existing = None
-            code = payload["minimax_code"]
-            if code:
-                existing = conn.execute(
-                    "SELECT id FROM parties WHERE minimax_code=? ORDER BY id LIMIT 1",
-                    (code,),
-                ).fetchone()
-            if existing is None and (tax or vat):
-                existing = conn.execute(
-                    """
-                    SELECT id FROM parties
-                    WHERE (? <> '' AND tax_number = ?) OR (? <> '' AND vat_id = ?)
-                    ORDER BY id LIMIT 1
-                    """,
-                    (tax, tax, vat, vat),
-                ).fetchone()
-            if existing is None and payload["name"]:
-                existing = conn.execute(
-                    "SELECT id FROM parties WHERE vat_id=? AND name=? ORDER BY id LIMIT 1",
-                    (payload["vat_id"], payload["name"]),
-                ).fetchone()
+            existing = self._match_existing_party(conn, payload, tax, vat)
             if existing:
                 return _apply_update(conn, int(existing["id"]))
 

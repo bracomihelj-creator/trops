@@ -95,3 +95,30 @@ def test_parse_id_rejects_invalid(bad):
 def test_email_send_requires_confirm(empty_motor):
     with pytest.raises(motor.BadRequest):
         empty_motor.ddvo_email_send({"to": "a@b.si", "subject": "x"})
+
+
+def test_new_party_with_existing_tax_asks_before_overwrite(empty_motor):
+    """5.1: »Nova stranka« z obstoječo davčno ne prepiše tiho; s potrditvijo posodobi; nova davčna doda."""
+    m = empty_motor
+    first = m.party_save({"name": "Prva d.o.o.", "tax_number": "12345678", "country": "SI", "city": "Ljubljana"})
+    assert first["ok"] is True
+    n0 = len(m.db.list_parties())
+    dup = m.party_save({"name": "Druga d.o.o.", "tax_number": "12345678", "country": "SI"})
+    assert dup["ok"] is False and dup["duplicate"] is True
+    assert dup["existing"]["id"] == first["id"]
+    assert m.db.get_party(first["id"])["name"] == "Prva d.o.o."
+    assert len(m.db.list_parties()) == n0
+    upd = m.party_save({"name": "Druga d.o.o.", "tax_number": "12345678", "country": "SI", "confirm_existing": True})
+    assert upd["ok"] is True and upd["id"] == first["id"]
+    assert m.db.get_party(first["id"])["name"] == "Druga d.o.o."
+    new = m.party_save({"name": "Tretja d.o.o.", "tax_number": "87654321", "country": "SI"})
+    assert new["ok"] is True and new["id"] != first["id"]
+    assert len(m.db.list_parties()) == n0 + 1
+    assert m.boot()["summary"]["parties"] == n0 + 1
+
+
+def test_edit_existing_party_needs_no_confirm(empty_motor):
+    m = empty_motor
+    first = m.party_save({"name": "Ena d.o.o.", "tax_number": "11223344", "country": "SI"})
+    res = m.party_save({"id": first["id"], "name": "Ena d.o.o.", "tax_number": "11223344", "country": "SI", "notes": "x"})
+    assert res["ok"] is True and m.db.get_party(first["id"])["notes"] == "x"

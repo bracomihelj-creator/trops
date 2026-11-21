@@ -184,6 +184,17 @@ class AccountsPartiesMixin:
             pid = int(pid_raw) if pid_raw not in (None, "") else None
             if pid is not None and not self.db.get_party(pid):
                 return {"ok": False, "error": "Stranka ne obstaja."}
+            if pid is None and data.get("confirm_existing") is not True:
+                # 5.1: nova stranka z davčno / ID za DDV / Minimax šifro, ki že obstaja, bi tiho prepisala obstoječo.
+                dup = self.db.find_existing_party(payload)
+                if dup:
+                    label = dup.get("name") or ""
+                    return {
+                        "ok": False,
+                        "duplicate": True,
+                        "existing": dup,
+                        "error": f"Stranka že obstaja: {label} (ID {dup.get('id')}). Odpri obstoječo ali jo posodobi.",
+                    }
             new_id = self.db.upsert_party(payload, pid)
             fresh = self.db.get_party(new_id) or {}
             self.refresh_all()

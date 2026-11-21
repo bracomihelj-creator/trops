@@ -1015,7 +1015,21 @@
           nameFld.classList.toggle("invalid", !v.name); nameFld.querySelector(".err").textContent = v.name ? "" : "Naziv je obvezen.";
           if (!v.name) return false;
           if (id) v.id = id;
-          withBusy(btn, act("party_save", { party: v }).then(function (r) { if (report(r)) { closeModal(); if (S.view === "parties") loadView("parties", true); } }));
+          var saved = function (r) { if (report(r)) { closeModal(); refreshAfter(); } };
+          withBusy(btn, act("party_save", { party: v }).then(function (r) {
+            if (r && r.duplicate && r.existing) {
+              // 5.1: stranka s to davčno / ID za DDV že obstaja — vprašaj, ne prepiši tiho.
+              var ex = r.existing;
+              partyResult("warn", "<b>Stranka že obstaja:</b> " + esc(ex.name || "") + " (ID " + esc(ex.id) + (ex.vat_id ? " · " + esc(ex.vat_id) : "") + (ex.city ? " · " + esc(ex.city) : "") + ")." +
+                "<br>Shrani bi prepisal njene podatke s tem obrazcem.<div class='lookupBar'><button class='btn sm' id='pDupOpen'>Odpri obstoječo</button>" +
+                "<button class='btn sm primary' id='pDupUpdate'>Posodobi obstoječo</button><button class='btn sm' id='pDupCancel'>Prekliči</button></div>");
+              $("pDupOpen").onclick = function () { closeModal(); partyEditor(ex.id); };
+              $("pDupUpdate").onclick = function () { var v2 = Object.assign({}, v, { confirm_existing: true }); act("party_save", { party: v2 }).then(saved); };
+              $("pDupCancel").onclick = function () { $("pResult").innerHTML = ""; };
+              return;
+            }
+            saved(r);
+          }));
           return false;
         } }],
       });
