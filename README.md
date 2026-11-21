@@ -41,7 +41,17 @@ Vsako vrednost lahko prepiše tudi okoljska spremenljivka `TROPS_<KLJUČ>`, npr.
 | `trops_root` | `D:\Trops` | podatki TROPS po Zšt (`{Zšt}\DDV`, `{Zšt}\MiniMax`, `dat\KONT*.DBF`) |
 | `integra_sql_dir` | `D:\Trops\20\SQL` | ZIP/BAK kopije Integra SQL |
 | `evidenca_firm_root` | `D:\PISARNA\Python\EvidencaFirm` | evidenca firm (`firme_evidenca.json`, AJPES moduli) |
-| `kirkpr_cursor_root` / `kirkpr_legacy_root` | `D:\PISARNA\Python\KirKpr_convert_cursor` / `…\KirKpr_convert` | zunanji KirKpr moduli |
+| `kirkpr_cursor_root` | `D:\PISARNA\Python\KirKpr_convert_cursor` | zunanji KirKpr moduli (rezervno: `vendor_kirkpr` v paketu) |
+
+## Videz: Trops 4 / Trops 5
+
+V zgornji vrstici je gumb **Videz** (tudi *Nastavitve → Videz*):
+
+- **Trops 5** — nov videz: temna stranska vrstica, kartice.
+- **Trops 4** — klasična postavitev kot v v4: znamka in menijska vrstica (Uvoz, Minimax, Nastavitve) zgoraj, svetlo drevo pogledov levo, gostejše tabele, barve v4.
+
+Gre za isti program in iste baze — zamenja se samo CSS videz; vsi gumbi, potrditve in funkcije v5 ostanejo.
+Izbira (in svetla/temna tema) se shrani v `settings.local.json` (`ui_videz`: `t5`/`t4`, `ui_tema`: `light`/`dark`) in velja ob naslednjem zagonu.
 
 ## Zunanji moduli na D:\ (niso v paketu)
 
