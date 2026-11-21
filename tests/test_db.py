@@ -135,3 +135,19 @@ def test_account_map_info_shows_shared_maps(empty_motor):
     got = {(x["trops_code"], bool(x["shared"])) for x in info["saved"]}
     assert ("7622", True) in got and ("4191", False) in got
     assert all(x["trops_code"] != "4061" for x in info["saved"])
+
+
+def test_default_maps_not_seeded_without_org(empty_motor):
+    """5.1 (2B): brez znanega Org_ID se privzete preslikave ne zapišejo v bazo (veljajo pa enako)."""
+    from trops_studio import account_choices as ac
+
+    db = empty_motor.db
+    ac._MAP_CACHE.clear()
+    maps = ac.load_account_code_maps(db, None)
+    assert maps["7622"] == "7620" and maps == {**ac.TROPS_TO_MINIMAX_DEFAULTS, **maps}
+    assert db.list_account_code_maps(None) == []
+    ac._MAP_CACHE.clear()
+    maps2 = ac.load_account_code_maps(db, "123456")
+    assert maps2 == maps
+    assert {m["org_id"] for m in db.list_account_code_maps(None)} == {"123456"}
+    ac._MAP_CACHE.clear()

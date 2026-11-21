@@ -363,7 +363,9 @@ def load_account_code_maps(db: Database, org_id: str | int | None = None) -> dic
         return dict(_MAP_CACHE[key])
     merged = dict(TROPS_TO_MINIMAX_DEFAULTS)
     try:
-        db.seed_default_account_code_maps(key if key != "local" else "")
+        # 5.1: brez znanega podjetja (org) privzetih ne zapisuj v bazo — veljajo že iz TROPS_TO_MINIMAX_DEFAULTS zgoraj.
+        if key != "local":
+            db.seed_default_account_code_maps(key)
         merged.update(db.get_account_code_map_dict(key if key != "local" else None))
     except Exception:
         pass
