@@ -79,7 +79,6 @@ DEFAULT_INTEGRA_SQL = setting_path("integra_sql_dir", DEFAULT_INTEGRA_TROPS / "S
 DEFAULT_KONT_DBF = setting_path("kont_dbf", r"D:\Trops\dat\KONT2005.DBF")
 KONT_DBF_FALLBACKS = (TROPS_ROOT / "dat" / "KONT.DBF", TROPS_ROOT / "dat" / "KONTO.DBF")
 
-POWERSHELL_32 = Path(r"C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe")
 PISARNA_PYTHON = setting_path("pisarna_python", r"D:\PISARNA\Python")
 EVIDENCA_FIRM_ROOT = setting_path("evidenca_firm_root", PISARNA_PYTHON / "EvidencaFirm")
 KIRKPR_CURSOR_ROOT = setting_path("kirkpr_cursor_root", PISARNA_PYTHON / "KirKpr_convert_cursor")
