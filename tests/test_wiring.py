@@ -53,7 +53,8 @@ def test_html_ids_used_by_js_exist():
     ids_js = set(re.findall(r'\$\("([A-Za-z]+)"\)', JS))
     dynamic = {"chkHead", "btnMore", "selInfo", "viewSearch", "statusFilter", "formWarn", "mPath", "mAcc", "mRemember", "mTo", "mCc",
                "mSubj", "mPrev", "mReviewed", "mSqlDir", "mPickDir", "mSaveDir", "mYear", "mKisanal", "mSure", "btnMissing",
-               "btnPartiesSync", "btnAnRefresh", "btnPickCo"}
+               "btnPartiesSync", "btnAnRefresh", "btnPickCo",
+                   "btnPartyNew", "mApplyData", "pAjpes", "pResult", "pVies"}
     ids_html = set(re.findall(r'id="([A-Za-z]+)"', HTML))
     missing = sorted(i for i in ids_js - dynamic if i not in ids_html)
     assert not missing, missing

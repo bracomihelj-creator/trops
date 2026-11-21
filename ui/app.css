@@ -215,3 +215,97 @@ label.chk.strong{font-weight:650;margin-top:10px}
 .content>.cols2{overflow:auto;min-height:0}
 table.grid td{max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .card>.pre{margin:12px 16px 16px}
+
+/* --- 5.1: gumb Videz (Trops 4 / Trops 5) --- */
+.lookSwitch{display:inline-flex;align-items:center;gap:2px;height:36px;padding:3px;border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.lookSwitch .lookLbl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);padding:0 6px 0 4px}
+.lookSwitch button{height:28px;border:0;border-radius:7px;background:transparent;padding:0 10px;font-size:12px;font-weight:650;color:var(--text-2);white-space:nowrap}
+.lookSwitch button:hover{color:var(--text)}
+.lookSwitch button.on{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+.lookBar{display:flex;gap:8px;margin:4px 0 2px}
+kbd{display:inline-block;min-width:22px;padding:1px 7px;border:1px solid var(--line-2);border-bottom-width:2px;border-radius:6px;background:var(--surface-2);font:600 11.5px var(--mono);color:var(--text)}
+table.grid.keys td{height:32px}
+.lookupBar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:2px 0 10px}
+.fld input.filled,.fld select.filled{border-color:var(--good);box-shadow:0 0 0 3px var(--good-soft);transition:box-shadow .3s}
+.fld input.bad,input.mmPick.bad{border-color:var(--bad)}
+td.fldCell{max-width:none;padding:3px 6px}
+input.mmPick{width:100%;height:28px;border:1px solid var(--line);border-radius:7px;padding:0 8px;background:var(--surface)}
+.tableWrap.tall{max-height:46vh}
+details.savedMaps{margin-top:12px}details.savedMaps summary{cursor:pointer;font-weight:650;color:var(--text-2)}
+.candList{display:flex;flex-direction:column;gap:2px;margin-top:6px}
+.empty.small{padding:24px 16px;display:flex;gap:12px;align-items:center;justify-content:center;text-align:left}
+
+/* --- 5.1: videz Trops 4 — posnema postavitev in barve v4 (svetlo drevo levo, menijska vrstica, goste tabele).
+   Samo CSS na istem v5 vmesniku: vsi gumbi, potrditve in funkcije v5 ostanejo. --- */
+[data-look=t4]{
+  --font:Inter,"Segoe UI",Arial,sans-serif;
+  --radius:14px; --row-h:27px;
+}
+[data-look=t4][data-theme=light]{
+  --bg:#f4f7fc; --surface:#ffffff; --surface-2:#f7f9ff; --surface-3:#eef1fb;
+  --text:#18233a; --text-2:#435575; --muted:#6c7993; --line:#e2e8f3; --line-2:#d7deee;
+  --accent:#5968e8; --accent-2:#596dec; --accent-soft:#e9ecff; --accent-text:#3a46b8;
+  --good:#1b9a72; --warn:#9a6b00; --bad:#c84b63;
+  --shadow:none; --shadow-lg:0 12px 28px #263f6c26;
+}
+[data-look=t4] body{font-size:12.5px}
+/* okvir: zgoraj znamka + menijska vrstica, levo svetlo drevo, desno delovni del */
+[data-look=t4] .shell{grid-template-columns:var(--t4-left,248px) minmax(0,1fr);grid-template-rows:auto auto minmax(0,1fr)}
+[data-look=t4] .sidebar{display:contents}
+[data-look=t4] .brand{grid-column:1/-1;grid-row:1;background:var(--surface);border-bottom:1px solid var(--line);padding:8px 14px;margin:0;gap:11px}
+[data-look=t4] .logo{width:34px;height:34px;border-radius:12px;font-size:16px;background:linear-gradient(145deg,#596dec,#926cea);box-shadow:none}
+[data-look=t4] .brandText b{color:var(--text);font-size:14px;font-weight:800}
+[data-look=t4] .brandText span{color:var(--muted)}
+[data-look=t4] .sideTools{grid-column:1/-1;grid-row:2;flex-direction:row;align-items:stretch;gap:2px;margin:0;padding:0 10px;background:var(--surface);border-bottom:1px solid var(--line);z-index:20}
+[data-look=t4] .sideTools>.navLbl{display:none}
+[data-look=t4] .sideTools .navItem{color:var(--text-2);border-radius:0;padding:7px 12px;min-height:32px;font-size:12px;font-weight:700;gap:6px}
+[data-look=t4] .sideTools .navItem svg:first-child{display:none}
+[data-look=t4] .sideTools .navItem span{display:inline!important}
+[data-look=t4] .sideTools .navItem .chev{display:inline-block!important;transform:rotate(90deg);width:12px;height:12px}
+[data-look=t4] .sideTools .navItem:hover,[data-look=t4] .menuGroup.open>.navItem{background:var(--surface-3);color:var(--text)}
+[data-look=t4] .flyout{border-radius:10px;min-width:280px}
+[data-look=t4] .flyout button{padding:7px 10px;font-size:12px;font-weight:650;color:var(--text-2)}
+[data-look=t4] .flyout button:hover{background:var(--accent-soft);color:var(--text)}
+[data-look=t4] .nav{grid-column:1;grid-row:3;background:var(--surface);border-right:1px solid var(--line);padding:10px;overflow:auto;gap:2px;min-height:0}
+[data-look=t4] .nav .navLbl{color:#8591a7;font-size:11px;font-weight:800;letter-spacing:.5px;padding:10px 6px 4px}
+[data-look=t4] .nav .navItem{color:var(--text-2);border-radius:10px;padding:7px 10px;font-size:12px;font-weight:700}
+[data-look=t4] .nav .navItem span{flex:1}
+[data-look=t4] .nav .navItem:hover{background:var(--surface-3);color:var(--text)}
+[data-look=t4] .nav .navItem.active{background:var(--accent-soft);color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+[data-look=t4] .nav .navItem em{background:var(--surface-3);color:var(--text-2)}
+[data-look=t4] .main{grid-column:2;grid-row:3;min-height:0}
+/* zgornja vrstica kot v4 periodBar, goste kartice in tabele */
+[data-look=t4] .topbar{background:var(--surface);border-bottom:1px solid var(--line);padding:6px 12px;gap:10px}
+[data-look=t4] .titleBlock h1{font-size:15px;font-weight:800}
+[data-look=t4] .crumbs{font-size:11px}
+[data-look=t4] .pickBtn,[data-look=t4] .iconBtn,[data-look=t4] .btn{border-radius:11px;box-shadow:none}
+[data-look=t4] .pickBtn{height:34px}
+[data-look=t4] .iconBtn{width:32px;height:32px}
+[data-look=t4] .btn{height:30px;padding:0 11px;font-size:12px;font-weight:750;border-color:var(--line-2);color:var(--text-2)}
+[data-look=t4] .btn.primary{color:#fff}
+[data-look=t4] .lookSwitch{height:32px;border-radius:11px}
+[data-look=t4] .alerts{padding:6px 12px 0}
+[data-look=t4] .kpis{grid-template-columns:repeat(auto-fit,minmax(130px,max-content));gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--line)}
+[data-look=t4] .kpi{background:var(--accent-soft);border-radius:12px;padding:6px 14px;min-width:110px}
+[data-look=t4] .kpi:before{display:none}
+[data-look=t4] .kpi .lbl{font-size:10px;font-weight:800;letter-spacing:.4px}
+[data-look=t4] .kpi .val{font-size:15px;font-weight:800;margin-top:1px}
+[data-look=t4] .kpi .sub{font-size:10.5px}
+[data-look=t4] .kpi.hero{background:var(--accent);color:#fff}
+[data-look=t4] .toolbar{padding:8px 12px 6px;gap:6px}
+[data-look=t4] .content{padding:0 12px 10px}
+[data-look=t4] .card{border-radius:14px}
+[data-look=t4] table.grid{font-size:12px}
+[data-look=t4] .grid thead th{height:30px;padding:0 8px;font-size:11.5px;font-weight:800;color:var(--text-2);background:var(--surface-2)}
+[data-look=t4] .grid td{padding:0 8px}
+[data-look=t4] .grid tbody tr:nth-child(even) td{background:transparent}
+[data-look=t4] .grid tbody tr:hover td{background:#fafbff}
+[data-look=t4][data-theme=dark] .grid tbody tr:hover td{background:var(--surface-3)}
+[data-look=t4] .grid tbody tr.sel td{background:var(--accent-soft)}
+[data-look=t4] .statusbar{padding:5px 12px;font-size:11px}
+[data-look=t4][data-theme=dark] .brand,[data-look=t4][data-theme=dark] .sideTools,[data-look=t4][data-theme=dark] .nav{background:var(--surface)}
+@media (max-width:1180px){
+  [data-look=t4] .shell{grid-template-columns:200px minmax(0,1fr)}
+  [data-look=t4] .brandText{display:flex}
+  [data-look=t4] .nav .navItem span,[data-look=t4] .nav .navLbl{display:revert}
+}

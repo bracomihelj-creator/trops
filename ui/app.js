@@ -746,7 +746,7 @@
       S.rows[o.view] = rows;
       if (o.kpis) kpis(o.kpis(data, rows)); else kpis([]);
       var shownRows = o.server ? rows : clientFilter(rows, S.search[o.view]);
-      renderTable({ view: o.view, cols: o.cols ? o.cols(rows) : genericCols(rows), rows: shownRows, totals: o.totals, empty: o.empty });
+      renderTable({ view: o.view, cols: o.cols ? o.cols(rows) : genericCols(rows), rows: shownRows, totals: o.totals, empty: o.empty, onDbl: o.onDbl });
     };
     var load = function () {
       var url = o.url + (o.server ? (o.url.indexOf("?") >= 0 ? "&" : "?") + "q=" + encodeURIComponent(S.search[o.view] || "") : "");
@@ -787,8 +787,9 @@
   function loadParties() {
     return listView({
       view: "parties", url: "/api/parties", server: true, ph: "Išči naziv, ID za DDV, davčno, kraj…",
-      extra: "<button class='btn sm' id='btnMissing'>" + icon("users") + "Manjkajoče stranke</button><button class='btn sm' id='btnPartiesSync'>" + icon("down") + "Stranke iz Minimax</button>",
-      bind: function () { $("btnMissing").onclick = function () { menuAction("missing"); }; $("btnPartiesSync").onclick = function () { menuAction("sync_parties"); }; },
+      extra: "<button class='btn sm primary' id='btnPartyNew' title='Dodaj novo stranko (podatke lahko izpolniš iz AJPES ali VIES)'>" + icon("plus") + "Nova stranka</button><button class='btn sm' id='btnMissing'>" + icon("users") + "Manjkajoče stranke</button><button class='btn sm' id='btnPartiesSync'>" + icon("down") + "Stranke iz Minimax</button>",
+      onDbl: function (id) { partyEditor(id); },
+      bind: function () { $("btnPartyNew").onclick = function () { partyEditor(null); }; $("btnMissing").onclick = function () { menuAction("missing"); }; $("btnPartiesSync").onclick = function () { menuAction("sync_parties"); }; },
       cols: function () {
         return [{ key: "name", label: "Naziv" }, { key: "vat_id", label: "ID za DDV" }, { key: "tax_number", label: "Davčna" }, { key: "country", label: "Država" },
           { key: "address", label: "Naslov" }, { key: "postal_code", label: "Pošta" }, { key: "city", label: "Kraj" }, { key: "email", label: "E-pošta" },
@@ -883,6 +884,166 @@
   }
 
   // ------------------------------------------------------------------ meni orodij
+  // ------------------------------------------------------------------ 5.1: konti Trops → Minimax, kontni plan
+  function accountMapDialog() {
+    api("/api/account_map").then(function (d) {
+      if (!d || d.ok === false) return toast(errText(d), "error");
+      var rows = d.rows || [];
+      var dl = "<datalist id='mmChoices'>" + (d.choices || []).map(function (c) { return "<option value='" + esc(c) + "'>"; }).join("") + "</datalist>";
+      var info = "<div class='stats'><div class='stat'><b>" + rows.length + "</b><span>kontov za preslikavo</span></div><div class='stat'><b>" + (d.mm_count || 0) +
+        "</b><span>knjižljivih v Minimaxu</span></div><div class='stat'><b>" + (d.saved || []).length + "</b><span>shranjenih preslikav</span></div></div>";
+      var warn = d.warning ? "<div class='alert warn'>" + icon("alert") + esc(d.warning) + "</div>" : "";
+      var body = rows.length ? "<div class='tableWrap short tall'><table class='grid'><thead><tr><th>Trops konto</th><th class='num'>Uporab</th><th>Minimax konto (zamenjava)</th></tr></thead><tbody>" +
+        rows.map(function (r, i) {
+          return "<tr><td class='code'>" + esc(r.trops_code) + "</td><td class='num'>" + esc(r.count) + "</td><td class='fldCell'><input class='mmPick' list='mmChoices' data-i='" + i + "' value='" + esc(r.suggested_label || "") + "' placeholder='Vpiši šifro ali naziv …'></td></tr>";
+        }).join("") + "</tbody></table></div>" +
+        "<label class='chk strong'><input type='checkbox' id='mApplyData' checked> Prepiši tudi obstoječe vrstice (IR, PR, knjižbe, kisanal)</label>"
+        : "<div class='empty small'>" + icon("check") + "<div><b>Vsi konti so skladni z Minimaxom.</b><br>Ni kontov, ki bi potrebovali preslikavo.</div></div>";
+      var saved = (d.saved || []).length ? "<details class='savedMaps'><summary>Shranjene preslikave (" + d.saved.length + ")</summary><div class='tableWrap short'><table class='grid'><thead><tr><th>Trops</th><th>Minimax</th><th>Vir</th><th>Posodobljeno</th></tr></thead><tbody>" +
+        d.saved.map(function (m) { return "<tr><td class='code'>" + esc(m.trops_code) + "</td><td>" + esc(m.minimax_label || m.minimax_code) + "</td><td>" + esc(m.source) + "</td><td>" + esc(siDate(m.updated_at)) + "</td></tr>"; }).join("") +
+        "</tbody></table></div></details>" : "";
+      var buttons = [{ label: "Zapri" }];
+      if (rows.length) buttons.push({ label: "Shrani preslikave", kind: "primary", icon: "check", onClick: function (btn) {
+        var maps = {}, missing = [];
+        qa(".mmPick", $("modalBody")).forEach(function (inp) {
+          var r = rows[+inp.getAttribute("data-i")], v = inp.value.trim();
+          inp.classList.toggle("bad", !v);
+          if (v) maps[r.trops_code] = v.split(" ")[0]; else missing.push(r.trops_code);
+        });
+        if (missing.length) { toast("Manjka Minimax konto za: " + missing.join(", "), "warn"); return false; }
+        var apply = $("mApplyData").checked;
+        var go = function (confirmed) {
+          withBusy(btn, act("account_map_save", { maps: maps, apply_data: apply, confirm: confirmed }).then(function (r) { if (report(r)) { closeModal(); refreshAfter(); } }));
+        };
+        if (!apply) { go(false); return false; }
+        closeModal();
+        confirmDialog({ title: "Prepis kontov v podatkih", icon: "alert", ok: "Shrani in prepiši",
+          html: "<p>Shranim <b>" + Object.keys(maps).length + "</b> preslikav in v lokalni bazi zamenjam konte v obstoječih IR, PR, knjižbah in kisanal?</p><p class='muted small'>Minimax se ne spremeni. Spremenjene vrstice bo treba pred sinhronizacijo znova potrditi.</p>" })
+          .then(function (yes) { if (yes) act("account_map_save", { maps: maps, apply_data: true, confirm: true }).then(function (r) { if (report(r)) refreshAfter(); }); });
+        return false;
+      } });
+      modal({ title: "Konti Trops → Minimax", wide: true, html: dl + "<p class='muted'>Konti, ki jih v Minimaxu ni ali niso knjižljivi. Izberi zamenjavo; preslikava se shrani in velja za vse naslednje uvoze in sinhronizacije." +
+        (d.org ? " Org " + esc(d.org) + "." : "") + "</p>" + warn + info + body + saved, buttons: buttons });
+    });
+  }
+  function minimaxAccountsSync() {
+    return confirmDialog({ title: "Kontni plan iz Minimax", icon: "down", ok: "Prenesi kontni plan",
+      html: "<p>Preberem kontni plan iz Minimaxa in ga shranim v lokalno bazo podjetja?</p><p class='muted small'>V Minimaxu se nič ne spremeni. Kontni plan se uporablja za izbiro kontov in preslikavo.</p>" })
+      .then(function (y) { if (y) runJob("minimax_accounts_sync", {}, "Kontni plan iz Minimax").then(function (r) { report(r, "Kontni plan prenesen."); if (S.view === "konti") loadView("konti"); }); });
+  }
+
+  // ------------------------------------------------------------------ 5.1: stranka (urejanje, AJPES, VIES)
+  var PARTY_FORM = [
+    ["Osnovno"], ["kind", "Vrsta", "select:SI,EU,THIRD,NONE"], ["name", "Naziv", "text", true, "span2"],
+    ["vat_id", "ID za DDV", "text"], ["tax_number", "Davčna / lokalni ID", "text"], ["country", "Država (2 črki)", "text"],
+    ["Naslov in kontakt"], ["address", "Naslov", "text", false, "span2"], ["postal_code", "Pošta", "text"], ["city", "Kraj", "text"],
+    ["email", "E-pošta", "text"], ["phone", "Telefon", "text"],
+    ["Registri"], ["registration_no", "Matična številka", "text"], ["ajpes_code", "AJPES šifra", "text"], ["iban", "TRR / IBAN", "text"],
+    ["minimax_code", "Minimax šifra", "text"], ["Opombe"], ["notes", "Opombe", "textarea", false, "span3"],
+  ];
+  var KIND_LABEL = { SI: "SI – domača", EU: "EU – tuja", THIRD: "Tretja država", NONE: "Ni zavezanec" };
+  function partyKind(r) {
+    var c = String(r.country || "SI").toUpperCase();
+    if (!+r.is_foreign && c === "SI") return r.tax_number || r.vat_id ? "SI" : "NONE";
+    return /^(AT|BE|BG|CY|CZ|DE|DK|EE|EL|GR|ES|FI|FR|HR|HU|IE|IT|LT|LU|LV|MT|NL|PL|PT|RO|SE|SK|XI)$/.test(c) ? "EU" : "THIRD";
+  }
+  function partyVals() {
+    var o = {};
+    qa("[data-p]", $("modalBody")).forEach(function (el) { o[el.getAttribute("data-p")] = el.value.trim(); });
+    return o;
+  }
+  function setParty(field, value, onlyEmpty) {
+    var el = document.querySelector("#modalBody [data-p='" + field + "']");
+    if (!el || value == null) return;
+    if (onlyEmpty && el.value.trim()) return;
+    el.value = value;
+    el.classList.add("filled"); setTimeout(function () { el.classList.remove("filled"); }, 1600);
+  }
+  function partyResult(kind, html) { var el = $("pResult"); if (el) el.innerHTML = "<div class='alert " + kind + "'>" + icon(kind === "error" ? "alert" : kind === "warn" ? "alert" : "check") + "<div>" + html + "</div></div>"; }
+  function partyAjpes(entity) {
+    var v = partyVals(); if (entity) v.ajpes_code = entity;
+    runJob("party_ajpes", { party: v }, "AJPES poizvedba").then(function (r) {
+      if (!r || r.ok === false) {
+        var cand = (r && r.candidates) || [];
+        var list = cand.length ? "<div class='candList'>" + cand.map(function (c, i) { return "<button class='link' data-c='" + i + "'>" + icon("building") + esc(c.name) + " · " + esc(c.tax_number || "—") + (c.city ? " · " + esc(c.city) : "") + "</button>"; }).join("") + "</div>" : "";
+        partyResult(r && r.needs_login ? "warn" : "error", esc(errText(r)) + list);
+        qa("[data-c]", $("pResult")).forEach(function (b) { b.onclick = function () { var c = cand[+b.getAttribute("data-c")]; setParty("ajpes_code", c.ajpes_code || ""); setParty("tax_number", c.tax_number || ""); partyAjpes(c.ajpes_code || ""); }; });
+        return;
+      }
+      setParty("kind", "SI"); setParty("country", "SI"); setParty("name", r.name); setParty("tax_number", r.tax_number); setParty("vat_id", "");
+      ["address", "postal_code", "city", "registration_no", "ajpes_code", "email", "phone"].forEach(function (k) { if (r[k]) setParty(k, r[k]); });
+      if (r.iban || (r.ibans || []).length) setParty("iban", r.iban || r.ibans[0]);
+      partyResult("good", esc(okText(r)) + " Preveri podatke in klikni <b>Shrani</b>.");
+    });
+  }
+  function partyVies() {
+    runJob("party_vies", { party: partyVals() }, "VIES preverba").then(function (r) {
+      if (!r || r.ok === false) return partyResult("error", esc(errText(r)));
+      if (r.valid) {
+        setParty("vat_id", r.full_vat); setParty("tax_number", r.vat_number); setParty("country", r.country);
+        setParty("kind", r.country === "SI" ? "SI" : "EU");
+        if (r.name) setParty("name", r.name, true);
+        if (r.address) setParty("address", String(r.address).split(/\r?\n/)[0], true);
+        partyResult("good", "<b>Je v sistemu VIES.</b> " + esc(r.full_vat) + (r.name ? " · " + esc(r.name) : "") + (r.address ? "<br><small>" + esc(r.address) + "</small>" : ""));
+      } else {
+        setParty("vat_id", "");
+        partyResult("warn", "<b>Ni v sistemu VIES.</b> " + esc(r.message || "") + "<br><small>Polje ID za DDV ostane prazno; v Minimax gre kot »ni zavezanec«.</small>");
+      }
+    });
+  }
+  function partyEditor(id) {
+    var load = id ? api("/api/party?id=" + encodeURIComponent(id)) : Promise.resolve({ ok: true, row: { country: "SI" } });
+    load.then(function (d) {
+      if (!d || d.ok === false) return toast(errText(d), "error");
+      var row = Object.assign({}, d.row || {}); row.kind = row.kind || partyKind(row);
+      var fields = PARTY_FORM.map(function (f) {
+        if (f.length === 1) return "<div class='formSec'>" + esc(f[0]) + "</div>";
+        var k = f[0], v = row[k] == null ? "" : row[k], inp;
+        if (f[2] === "textarea") inp = "<textarea data-p='" + k + "'>" + esc(v) + "</textarea>";
+        else if (f[2].indexOf("select:") === 0) inp = "<select data-p='" + k + "'>" + f[2].slice(7).split(",").map(function (o) { return "<option value='" + o + "'" + (String(v) === o ? " selected" : "") + ">" + esc(KIND_LABEL[o] || o) + "</option>"; }).join("") + "</select>";
+        else inp = "<input data-p='" + k + "' value='" + esc(v) + "'>";
+        return "<label class='fld " + (f[4] || "") + "'" + (f[3] ? " data-req='1'" : "") + "><span>" + esc(f[1]) + (f[3] ? " *" : "") + "</span>" + inp + "<small class='err'></small></label>";
+      }).join("");
+      var meta = id ? "<p class='muted small'>ID " + esc(row.id) + " · Minimax: " + (badgeFor(row.sync_status) || "—") + (row.source ? " · vir: " + esc(row.source) : "") + "</p>" : "";
+      modal({
+        title: id ? "Stranka · " + (row.name || "") : "Nova stranka", wide: true,
+        html: meta + "<div class='lookupBar'><button class='btn sm' id='pAjpes'>" + icon("building") + "Poišči v AJPES</button><button class='btn sm' id='pVies'>" + icon("check") + "Preveri VIES</button>" +
+          "<span class='muted small'>Poizvedba samo izpolni obrazec — shrani se šele s klikom Shrani.</span></div><div id='pResult'></div><div class='formGrid'>" + fields + "</div>",
+        buttons: [{ label: "Prekliči" }, { label: "Shrani", kind: "primary", icon: "check", onClick: function (btn) {
+          var v = partyVals();
+          var nameFld = document.querySelector("#modalBody [data-p='name']").closest(".fld");
+          nameFld.classList.toggle("invalid", !v.name); nameFld.querySelector(".err").textContent = v.name ? "" : "Naziv je obvezen.";
+          if (!v.name) return false;
+          if (id) v.id = id;
+          withBusy(btn, act("party_save", { party: v }).then(function (r) { if (report(r)) { closeModal(); if (S.view === "parties") loadView("parties", true); } }));
+          return false;
+        } }],
+      });
+      $("pAjpes").onclick = function () { partyAjpes(""); };
+      $("pVies").onclick = partyVies;
+    });
+  }
+
+  // ------------------------------------------------------------------ 5.1: videz (Trops 4 / Trops 5) in tema — shranjeno v nastavitvah
+  function applyLook(look) {
+    look = look === "t4" ? "t4" : "t5";
+    document.documentElement.setAttribute("data-look", look);
+    qa("[data-look-btn]").forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-look-btn") === look); b.setAttribute("aria-pressed", b.getAttribute("data-look-btn") === look ? "true" : "false"); });
+    closeFlyouts();
+  }
+  function saveUiPref(key, value) {
+    try { localStorage.setItem("trops5." + key, value); } catch (_e) { /* zasebni način */ }
+    return act("set_ui_pref", { key: key, value: value }).then(function (r) { if (r && r.ok === false) toast("Nastavitev ni shranjena: " + errText(r), "warn"); });
+  }
+  function setLook(look) { applyLook(look); saveUiPref("ui_videz", look); }
+
+  // ------------------------------------------------------------------ 5.1: bližnjice
+  var SHORTCUTS = [["F5", "Osveži podatke"], ["Ctrl+F", "Iskanje v pogledu"], ["Alt+1 … Alt+9", "Pogledi: IR, PR, DDV-O, Knjiga IR, Knjiga PR, Konti, Knjižbe, Stranke, Analitika"],
+    ["Alt+← / Alt+→", "Prejšnje / naslednje obdobje"], ["Ctrl+Enter", "Potrdi okno (Shrani / Potrdi)"], ["Esc", "Zapri okno ali meni"], ["?", "Ta seznam bližnjic"], ["Dvoklik", "Uredi vrstico ali stranko"]];
+  function shortcutsHelp() {
+    modal({ title: "Bližnjice na tipkovnici", html: "<table class='grid keys'><tbody>" + SHORTCUTS.map(function (s) { return "<tr><td><kbd>" + esc(s[0]) + "</kbd></td><td>" + esc(s[1]) + "</td></tr>"; }).join("") + "</tbody></table>" });
+  }
+
   function menuAction(a) {
     closeFlyouts();
     switch (a) {
@@ -934,6 +1095,12 @@
       case "mrn": return mrnFlow();
       case "classic": return act("open_classic").then(function (r) { report(r, "Klasični urejevalnik se odpira."); });
       case "theme": return toggleTheme();
+      case "look_t4": return setLook("t4");
+      case "look_t5": return setLook("t5");
+      case "shortcuts": return shortcutsHelp();
+      case "account_map": return accountMapDialog();
+      case "mm_accounts": return minimaxAccountsSync();
+      case "party_new": return partyEditor(null);
       case "about":
         return modal({ title: "O programu", html: "<p><b>Trops Studio " + esc((S.boot && S.boot.version) || "5.0.00") + "</b></p><p>" + esc((S.boot && S.boot.workflow) || "") + "</p><p class='muted small'>" + esc($("dbPath").textContent) + "</p>" });
       case "close":
@@ -947,6 +1114,11 @@
     if (!fly) return;
     var r = btn.getBoundingClientRect();
     var h = fly.offsetHeight;
+    if (document.documentElement.getAttribute("data-look") === "t4") {
+      fly.style.left = Math.max(8, Math.min(r.left, window.innerWidth - fly.offsetWidth - 8)) + "px";
+      fly.style.top = (r.bottom + 2) + "px";
+      return;
+    }
     fly.style.left = (r.right + 6) + "px";
     fly.style.top = Math.max(8, Math.min(r.top, window.innerHeight - h - 8)) + "px";
   }
@@ -987,8 +1159,8 @@
   }
   function toggleTheme() {
     var t = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-    try { localStorage.setItem("trops5.theme", t); } catch (_e) { /* zasebni način */ }
     applyTheme(t);
+    saveUiPref("ui_tema", t);
   }
 
   // ------------------------------------------------------------------ dogodki
@@ -1018,6 +1190,7 @@
     $("btnNextPeriod").onclick = function () { act("shift_period", { delta: 1 }).then(function (d) { if (d.ok === false) return toast(errText(d), "error"); S.rows = {}; afterChange(d); }); };
     $("btnRefresh").onclick = function () { withBusy($("btnRefresh"), act("refresh").then(function (d) { if (d.ok === false) return toast(errText(d), "error"); afterChange(d); toast("Osveženo.", "info", 1800); })); };
     $("btnTheme").onclick = toggleTheme;
+    qa("[data-look-btn]").forEach(function (b) { b.onclick = function (e) { e.stopPropagation(); setLook(b.getAttribute("data-look-btn")); }; });
     $("btnSync").onclick = function () { syncDialog("ALL"); };
     $("modalX").onclick = function () { closeModal(); };
     $("modal").addEventListener("mousedown", function (e) { if (e.target === $("modal")) closeModal(); });
@@ -1027,18 +1200,43 @@
       if (e.key === "Escape") { if (!$("modal").hidden) closeModal(); $("companyPop").hidden = true; $("periodPop").hidden = true; closeFlyouts(); }
       if (e.key === "F5") { e.preventDefault(); $("btnRefresh").click(); }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "f") { var s = $("viewSearch"); if (s) { e.preventDefault(); s.focus(); s.select(); } }
+      var typing = /^(INPUT|TEXTAREA|SELECT)$/.test((e.target && e.target.tagName) || "");
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter" && !$("modal").hidden) {
+        var btns = qa("#modalFoot .btn.primary,#modalFoot .btn.danger"); if (btns.length) { e.preventDefault(); btns[btns.length - 1].click(); }
+      }
+      if (e.altKey && !e.ctrlKey && $("modal").hidden) {
+        var order = ["ir", "pr", "ddvo", "knjiga_ir", "knjiga_pr", "konti", "knjizbe", "parties", "analysis"];
+        var n = parseInt(e.key, 10);
+        if (n >= 1 && n <= order.length) { e.preventDefault(); loadView(order[n - 1]); }
+        if (e.key === "ArrowLeft") { e.preventDefault(); $("btnPrevPeriod").click(); }
+        if (e.key === "ArrowRight") { e.preventDefault(); $("btnNextPeriod").click(); }
+      }
+      if (e.key === "?" && !typing && $("modal").hidden) { e.preventDefault(); shortcutsHelp(); }
     });
   }
 
   function init() {
-    var t = "light";
-    try { t = localStorage.getItem("trops5.theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"); } catch (_e) { /* ignore */ }
+    // Pred odgovorom strežnika uporabi zadnjo lokalno izbiro (brez utripa); veljavna je vrednost iz nastavitev (boot.ui).
+    var t = "light", look = "t5";
+    try {
+      t = localStorage.getItem("trops5.ui_tema") || localStorage.getItem("trops5.theme") || "light";
+      look = localStorage.getItem("trops5.ui_videz") || "t5";
+    } catch (_e) { /* ignore */ }
     applyTheme(t);
+    applyLook(look);
     bind();
     status("Nalagam…", "busy");
     api("/api/boot").then(function (d) {
       if (d.ok === false) { toast(errText(d), "error"); status(errText(d), "error"); return; }
       applyBoot(d);
+      if (d.ui) {
+        applyLook(d.ui.ui_videz);
+        var oldDark = false;
+        try { oldDark = !localStorage.getItem("trops5.ui_tema") && localStorage.getItem("trops5.theme") === "dark"; } catch (_e) { /* ignore */ }
+        if (oldDark && d.ui.ui_tema === "light") saveUiPref("ui_tema", "dark"); // prenos stare izbire iz 5.0
+        else applyTheme(d.ui.ui_tema);
+        try { localStorage.setItem("trops5.ui_videz", d.ui.ui_videz); } catch (_e) { /* ignore */ }
+      }
       loadView("ir");
     }).catch(function (e) { toast("Strežnik ni dosegljiv: " + e, "error"); status("Strežnik ni dosegljiv.", "error"); });
   }

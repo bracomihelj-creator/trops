@@ -88,9 +88,11 @@
         <button class="navItem" data-menu="minimax"><svg><use href="#i-sync"/></svg><span>Minimax</span><svg class="chev"><use href="#i-chev-r"/></svg></button>
         <div class="flyout" data-flyout="minimax">
           <button data-act="sync_parties"><svg><use href="#i-down"/></svg>1 · Stranke iz Minimax</button>
+          <button data-act="account_map"><svg><use href="#i-tag"/></svg>2 · Konti Trops → Minimax…</button>
           <button data-act="missing"><svg><use href="#i-users"/></svg>3 · Manjkajoče stranke…</button>
           <button data-act="sync_ready"><svg><use href="#i-sync"/></svg>5 · Sinhroniziraj…</button>
           <hr>
+          <button data-act="mm_accounts"><svg><use href="#i-down"/></svg>Kontni plan iz Minimax</button>
           <button data-act="export_kirkpr_xml"><svg><use href="#i-file"/></svg>Izvozi XML za KirKpr</button>
           <button data-act="check_api"><svg><use href="#i-plug"/></svg>Preveri Minimax API</button>
           <button data-act="mrn"><svg><use href="#i-down"/></svg>eDavki MRN prenesi</button>
@@ -101,7 +103,10 @@
         <div class="flyout" data-flyout="settings">
           <button data-act="integra"><svg><use href="#i-folder"/></svg>Integra SQL mapa…</button>
           <button data-act="classic"><svg><use href="#i-win"/></svg>Klasični urejevalnik (Tk)…</button>
+          <button data-act="look_t4"><svg><use href="#i-win"/></svg>Videz: Trops 4 (klasičen)</button>
+          <button data-act="look_t5"><svg><use href="#i-win"/></svg>Videz: Trops 5 (nov)</button>
           <button data-act="theme"><svg><use href="#i-moon"/></svg>Svetla / temna tema</button>
+          <button data-act="shortcuts"><svg><use href="#i-info"/></svg>Bližnjice na tipkovnici (?)</button>
           <hr>
           <button data-act="about"><svg><use href="#i-info"/></svg>O programu</button>
           <button data-act="close"><svg><use href="#i-x"/></svg>Izhod</button>
@@ -159,6 +164,11 @@
           <button class="iconBtn" id="btnNextPeriod" title="Naslednje obdobje"><svg><use href="#i-chev-r"/></svg></button>
         </div>
 
+        <div class="lookSwitch" id="lookSwitch" role="group" aria-label="Videz" title="Videz programa: Trops 4 (klasična postavitev) ali Trops 5 (nova). Spremeni samo izgled — podatki in funkcije ostanejo enaki.">
+          <span class="lookLbl">Videz</span>
+          <button data-look-btn="t4" aria-pressed="false">Trops 4</button>
+          <button data-look-btn="t5" aria-pressed="true" class="on">Trops 5</button>
+        </div>
         <button class="iconBtn" id="btnRefresh" title="Osveži (F5)"><svg><use href="#i-refresh"/></svg></button>
         <button class="iconBtn" id="btnTheme" title="Tema"><svg><use href="#i-moon"/></svg></button>
         <button class="btn primary" id="btnSync" title="Sinhroniziraj potrjene IR/PR z Minimax"><svg><use href="#i-sync"/></svg>Sinhroniziraj</button>
@@ -174,7 +184,7 @@
       <span class="dot" id="statusDot"></span><span id="statusText">Pripravljeno.</span>
       <span class="grow"></span>
       <span class="muted" id="dbPath"></span>
-      <span class="muted">F5 osveži · Esc zapre okno · dvoklik uredi vrstico</span>
+      <span class="muted">F5 osveži · Esc zapre okno · dvoklik uredi vrstico · ? bližnjice</span>
     </footer>
   </div>
 </div>
