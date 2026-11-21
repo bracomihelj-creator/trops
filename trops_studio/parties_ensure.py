@@ -24,6 +24,9 @@ from trops_studio.money import (
     tax_digits,
     vats_compatible,
 )
+import logging as _logging
+
+_log = _logging.getLogger(__name__)
 
 # Ukrep v dialogu Nove firme → Minimax
 ACTION_SI_AJPES = "si_ajpes"       # SI+davčna: dodaj v Minimax, Trops samo poveže
@@ -76,7 +79,7 @@ def collect_missing_parties(db: Database) -> list[dict[str, Any]]:
             if name and find_party_for_journal_name(db, name):
                 return
         except Exception:
-            pass
+            _log.warning("Iskanje obstoječe stranke ni uspelo", exc_info=True)
         missing.append(
             {
                 "kind": kind,
@@ -1150,7 +1153,7 @@ def collect_missing_ir_parties(
             if _ir_payment_account(row) in {"1000", "1650"}:
                 continue
         except Exception:
-            pass
+            _log.warning("Plačilni konto IR ni določljiv", exc_info=True)
         vat = normalize_vat_id(row.get("vat_id"))
         # Brez EU ID za DDV → Projest: sync gre na 01345, ni treba listview
         if not has_eu_vat_id(vat):
@@ -1336,7 +1339,7 @@ def stage_journal_parties_to_sql(
             try:
                 db.set_party_sync(int(party_id), SYNC_READY)
             except Exception:
-                pass
+                _log.warning("Stranka: status »pripravljeno« ni nastavljen", exc_info=True)
             pid = int(party_id)
         else:
             found = None
@@ -1351,13 +1354,13 @@ def stage_journal_parties_to_sql(
                     try:
                         db.set_party_sync(pid, SYNC_READY)
                     except Exception:
-                        pass
+                        _log.warning("Stranka: status »pripravljeno« ni nastavljen", exc_info=True)
             else:
                 pid = db.upsert_party(payload)
                 try:
                     db.set_party_sync(pid, SYNC_READY)
                 except Exception:
-                    pass
+                    _log.warning("Stranka: status »pripravljeno« ni nastavljen", exc_info=True)
         staged += 1
         linked += link_journal_rows_to_party(db, pid, names=[name])
     linked += link_rows_to_parties(db)

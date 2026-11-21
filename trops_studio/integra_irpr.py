@@ -39,6 +39,9 @@ from trops_studio.money import (
     parse_date,
     tax_digits,
 )
+import logging as _logging
+
+_log = _logging.getLogger(__name__)
 
 KISANAL_NOTE_PREFIX = "kisanal:"
 
@@ -923,7 +926,7 @@ def import_kisanal_to_ir_pr(
         try:
             db.replace_journal_lines("IR", int(rid), data)
         except Exception:
-            pass
+            _log.warning("Knjižbe IR %s niso osvežene", rid, exc_info=True)
         result.ir += 1
         result.ir_ctrls.append(ctrl)
 
@@ -1068,7 +1071,7 @@ def _patch_existing_ir(db: Database, row_id: int, data: Mapping[str, Any]) -> bo
     try:
         db.replace_journal_lines("IR", row_id, db.get_ir(row_id) or payload)
     except Exception:
-        pass
+        _log.warning("Knjižbe IR %s niso osvežene", row_id, exc_info=True)
     return True
 
 

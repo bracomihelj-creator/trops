@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
 from dataclasses import dataclass
@@ -133,7 +134,7 @@ def open_path(path: Path) -> None:
     try:
         os.startfile(str(path))  # type: ignore[attr-defined]
     except Exception:
-        pass
+        logging.getLogger(__name__).warning("Datoteke %s ni mogoče odpreti", path, exc_info=True)
 
 
 def create_virman_package(

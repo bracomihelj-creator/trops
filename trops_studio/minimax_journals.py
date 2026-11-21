@@ -427,6 +427,7 @@ def _index_existing_journals(
     try:
         summaries = client.journals(date_from=date_from, date_to=date_to)
     except Exception:
+        logging.getLogger(__name__).warning("Minimax: seznam temeljnic %s–%s ni dosegljiv (preverba dvojnikov preskočena)", date_from, date_to, exc_info=True)
         return by_tag, by_doc_amt
 
     count = len(summaries)
@@ -513,6 +514,7 @@ def _repair_vat_listina(client: Any, journal_id: int, payload: Mapping[str, Any]
     try:
         detail = client.get(f"orgs/{client.organisation_id}/journals/{int(journal_id)}")
     except Exception:
+        logging.getLogger(__name__).warning("Minimax: temeljnica %s ni berljiva", journal_id, exc_info=True)
         return 0
     existing = list(detail.get("VatEntries") or []) if isinstance(detail, Mapping) else []
     ok = True
@@ -706,6 +708,7 @@ def push_journals_as_drafts(
         try:
             detail = client.journal(journal_id)
         except Exception:
+            logging.getLogger(__name__).warning("Minimax: DDV knjige temeljnice %s niso berljive", journal_id, exc_info=True)
             return set()
         vat = detail.get("VatEntries") if isinstance(detail, Mapping) else None
         if not isinstance(vat, list):

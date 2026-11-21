@@ -482,6 +482,7 @@ def find_customer_by_tax(
         try:
             body = client.get(f"orgs/{client.organisation_id}/customers?{query}")
         except Exception:
+            logging.getLogger(__name__).warning("Minimax: iskanje strank (%s) ni uspelo", term, exc_info=True)
             continue
         for row in _rows(body):
             if vats_compatible(vat or tax8, _customer_vat_blob(row), left_country=country):
@@ -506,6 +507,7 @@ def find_customer_by_exact_name(
     try:
         body = client.get(f"orgs/{client.organisation_id}/customers?{query}")
     except Exception:
+        logging.getLogger(__name__).warning("Minimax: iskanje stranke po nazivu ni uspelo", exc_info=True)
         return None
     cc = (normalize_text(country)[:2] or "").upper()
     for row in _rows(body):

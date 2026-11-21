@@ -22,6 +22,10 @@ APP_ROOT = PACKAGE_ROOT.parent
 SETTINGS_FILES = (APP_ROOT / "settings.local.json", APP_ROOT / "settings.json")
 
 
+# Napake pri branju nastavitev (pokvarjen JSON …) — prikažejo se v UI kot opozorilo in v dnevniku.
+SETTINGS_ERRORS: list[str] = []
+
+
 def _load_settings() -> dict[str, Any]:
     merged: dict[str, Any] = {}
     for path in reversed(SETTINGS_FILES):
@@ -30,8 +34,9 @@ def _load_settings() -> dict[str, Any]:
                 data = json.loads(path.read_text(encoding="utf-8-sig"))
                 if isinstance(data, dict):
                     merged.update({k: v for k, v in data.items() if not str(k).startswith("_")})
-        except (OSError, json.JSONDecodeError):
-            # Pokvarjena nastavitev ne sme ustaviti zagona — velja privzeto.
+        except (OSError, json.JSONDecodeError) as exc:
+            # Pokvarjena nastavitev ne sme ustaviti zagona — velja privzeto, a uporabnik to vidi.
+            SETTINGS_ERRORS.append(f"{path.name} ni berljiv ({exc}); veljajo privzete nastavitve.")
             continue
     return merged
 
