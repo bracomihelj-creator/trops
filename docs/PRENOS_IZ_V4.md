@@ -5,3 +5,4 @@
 - Skopirane tudi datoteke ai_settings.json, os_webui_fill.json, vat_api_cache.json, vat_api_sessions.json, party_name_aliases.json ter mapi MiniMax in backups.
 - v5 uporablja lastno mapo data (data_dir prazen = Trops_v5\data).
 - Celotna mapa Trops_v4 je arhivirana v D:\PISARNA\Python\Trops_v4_arhiv_20261121.zip in nato izbrisana.
+- Arhiv preverjen (629 datotek), mapa Trops_v4 izbrisana 21.11.2026.
