@@ -17,6 +17,7 @@ from trops_studio import APP_TITLE, __version__ as APP_VERSION  # noqa: E402
 from trops_studio.money import parse_date  # noqa: E402
 from trops_studio.sync_state import SYNC_ERROR, SYNC_READY, SYNC_SYNCED  # noqa: E402
 from trops_studio_web.accounts_parties import AccountsPartiesMixin, InputError  # noqa: E402
+from trops_studio_web.ui_prefs import load_ui_prefs, save_ui_pref  # noqa: E402
 from trops_studio_web.service import AppService, _safe  # noqa: E402
 
 __all__ = ["APP_TITLE", "APP_VERSION", "AppService", "BadRequest", "Motor"]
@@ -85,9 +86,14 @@ class Motor(AccountsPartiesMixin, AppService):
 
         if SETTINGS_ERRORS:
             data["warnings"] = list(data.get("warnings") or []) + list(SETTINGS_ERRORS)
+        data["ui"] = load_ui_prefs()
         data["version"] = APP_VERSION
         data["title"] = APP_TITLE
         return data
+
+    def set_ui_pref(self, key: Any, value: Any) -> dict[str, Any]:
+        """Videz (Trops 4 / Trops 5) ali tema → settings.local.json. Ne vpliva na podatke."""
+        return save_ui_pref(key, value)
 
     def get_row(self, kind: str, row_id: Any) -> dict[str, Any]:
         rid = parse_id(row_id)

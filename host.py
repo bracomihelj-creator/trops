@@ -402,6 +402,7 @@ def _actions(m: Motor) -> Dict[str, Callable[[Dict[str, Any]], Any]]:
         "party_save": lambda b: m.party_save(b.get("party") if isinstance(b.get("party"), dict) else None),
         "party_ajpes": lambda b: m.party_ajpes(b.get("party") if isinstance(b.get("party"), dict) else {}),
         "party_vies": lambda b: m.party_vies(b.get("party") if isinstance(b.get("party"), dict) else {}),
+        "set_ui_pref": lambda b: m.set_ui_pref(b.get("key"), b.get("value")),
     }
 
 
