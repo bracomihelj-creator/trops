@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Trops Studio 5.0.00 — tanek zagon (kot Evidence_8.pyw → host.desktop)."""
+"""Trops Studio 5.1.00 — tanek zagon (kot Evidence_8.pyw → host.desktop)."""
 from __future__ import annotations
 
 import sys
@@ -18,7 +18,7 @@ def _fatal(message: str) -> int:
 
         root = tk.Tk()
         root.withdraw()
-        messagebox.showerror("Trops Studio 5.0.00", message)
+        messagebox.showerror("Trops Studio 5.1.00", message)
         root.destroy()
     except Exception:
         sys.stderr.write(message + "\n")

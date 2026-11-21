@@ -1,4 +1,4 @@
-# Trops Studio 5.0.00 — Python 3.10+, Windows 10/11 + WebView2 Runtime
+# Trops Studio 5.1.00 — Python 3.10+, Windows 10/11 + WebView2 Runtime
 pywebview>=5.0,<7; sys_platform == "win32"
 tkcalendar>=1.6.1,<2
 lxml>=5.0,<7

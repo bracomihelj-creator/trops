@@ -59,7 +59,7 @@ def test_ticket_sets_cookie(server):
 
 def test_boot_ok(server):
     code, data, _ = _req(server, "GET", "/api/boot")
-    assert code == 200 and data["ok"] is True and data["version"] == "5.0.00"
+    assert code == 200 and data["ok"] is True and data["version"] == "5.1.00"
 
 
 @pytest.mark.parametrize("path", ["/api/row?kind=IR&id=abc", "/api/row?kind=IR&id="])

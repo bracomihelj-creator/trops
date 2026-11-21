@@ -1,4 +1,4 @@
-/* Trops Studio 5.0.00 — spletni vmesnik (WebView2). Vse poslovne akcije gredo prek /api/* v host.py. */
+/* Trops Studio 5.1.00 — spletni vmesnik (WebView2). Vse poslovne akcije gredo prek /api/* v host.py. */
 (function () {
   "use strict";
 
@@ -184,7 +184,7 @@
     if (!data || data.ok === false) { if (data) toast(errText(data), "error"); return; }
     S.boot = data;
     var c = data.company || {};
-    $("brandVer").textContent = "Verzija " + (data.version || "5.0.00");
+    $("brandVer").textContent = "Verzija " + (data.version || "5.1.00");
     $("companyName").textContent = c.zst ? (c.zst + " · " + (c.name || "")) : "Izberi podjetje";
     var p = data.period || {};
     $("periodLbl").textContent = p.label ? (p.label + " " + (p.year || "")) : "Obdobje";
@@ -1102,7 +1102,7 @@
       case "mm_accounts": return minimaxAccountsSync();
       case "party_new": return partyEditor(null);
       case "about":
-        return modal({ title: "O programu", html: "<p><b>Trops Studio " + esc((S.boot && S.boot.version) || "5.0.00") + "</b></p><p>" + esc((S.boot && S.boot.workflow) || "") + "</p><p class='muted small'>" + esc($("dbPath").textContent) + "</p>" });
+        return modal({ title: "O programu", html: "<p><b>Trops Studio " + esc((S.boot && S.boot.version) || "5.1.00") + "</b></p><p>" + esc((S.boot && S.boot.workflow) || "") + "</p><p class='muted small'>" + esc($("dbPath").textContent) + "</p>" });
       case "close":
         return confirmDialog({ title: "Izhod", ok: "Zapri program", html: "<p>Zaprem Trops Studio?</p>" }).then(function (y) {
           if (!y) return;

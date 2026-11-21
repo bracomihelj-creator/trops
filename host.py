@@ -1,4 +1,4 @@
-"""Trops Studio 5.0.00 — pywebview + Edge WebView2 (vzorec Evidence 8).
+"""Trops Studio 5.1.00 — pywebview + Edge WebView2 (vzorec Evidence 8).
 
 HTTP API + statični ui/ ; js_api Bridge samo za datotečne dialoge / zapiranje.
 Poslovno jedro: motor.Motor → trops_studio (+ AppService).

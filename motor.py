@@ -1,4 +1,4 @@
-"""Trops Studio 5.0.00 — motor: AppService + akcije za spletni UI (naloge, DDV-O, potrditve)."""
+"""Trops Studio 5.1.00 — motor: AppService + akcije za spletni UI (naloge, DDV-O, potrditve)."""
 from __future__ import annotations
 
 import logging

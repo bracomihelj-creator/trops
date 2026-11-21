@@ -1,4 +1,4 @@
-# Trops Studio 5.0.00
+# Trops Studio 5.1.00
 
 Namizna aplikacija za knjigovodstvo DDV: uvoz IR/PR (Vasco, FURS KIR/KPR, Integra SQL), pregled in urejanje,
 obrazec **DDV-O** (XML za eDavke, PDF, virman UPN QR, e-pošta stranki) in sinhronizacija temeljnic v **Minimax**.
@@ -11,13 +11,13 @@ obrazec **DDV-O** (XML za eDavke, PDF, virman UPN QR, e-pošta stranki) in sinhr
 
 1. Razpakiraj v `D:\PISARNA\Python\Trops_v5`.
 2. `py -3.10 -m pip install -r requirements.txt` (ali dvoklik `INSTALL.pyw`).
-3. Zagon: `Zazeni_Trops_Studio_V5.bat` ali `Trops_Studio_V5.0.00.pyw`.
+3. Zagon: `Zazeni_Trops_Studio_V5.bat` ali `Trops_Studio_V5.1.00.pyw`.
 
 ## Struktura
 
 | Pot | Vsebina |
 |---|---|
-| `Trops_Studio_V5.0.00.pyw`, `Trops_Studio.pyw`, `Zazeni_Trops_Studio_V5.bat` | zagon spletnega UI (`host.desktop()`) |
+| `Trops_Studio_V5.1.00.pyw`, `Trops_Studio.pyw`, `Zazeni_Trops_Studio_V5.bat` | zagon spletnega UI (`host.desktop()`) |
 | `INSTALL.pyw` | preveri predpogoje, namesti pakete in ponudi kopijo podatkov v4 |
 | `host.py` | HTTP strežnik, API (`/api/*`), ozadne naloge (`/api/job`), Bridge (izbirnik datotek) |
 | `motor.py` | sloj med API in poslovno logiko: validacija, potrditve, DDV-O akcije |
