@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import re
-from pathlib import Path
 from typing import Any, Mapping
 
 from trops_studio.config import (
@@ -10,7 +9,6 @@ from trops_studio.config import (
     DEFAULT_PR_EXPENSE_ACCOUNT,
 )
 from trops_studio.db import Database
-from trops_studio.excel_bridge import read_account_history
 from trops_studio.money import (
     decimal_value,
     ensure_eu_vat_id,
@@ -20,12 +18,6 @@ from trops_studio.money import (
     normalize_vat_id,
     tax_digits,
 )
-
-
-def _as_list(value: Any) -> list[Any]:
-    if value is None:
-        return []
-    return value if isinstance(value, list) else [value]
 
 
 def _valid_account(code: str) -> str:
@@ -445,72 +437,3 @@ def resolve_ir_account(
     return coerce_minimax_bookable_account(
         db, org, account, fallback=account or DEFAULT_IR_REVENUE_ACCOUNT
     )
-
-
-def import_account_templates_from_accdb(db: Database, accdb: Path) -> dict[str, int]:
-    """Prenese vzorce kontov iz Access zgodovine / tblPR_KontoPravila v SQLite."""
-    if not accdb.is_file():
-        raise FileNotFoundError(f"Access baza ni najdena: {accdb}")
-    payload = read_account_history(accdb)
-    recent_added = 0
-    rules_added = 0
-    seen_tax: set[str] = set()
-
-    for raw in _as_list(payload.get("recent")):
-        tax = tax_digits(raw.get("DS"))
-        name = normalize_text(raw.get("6-Dobavitelj"))
-        key = tax or name.casefold()
-        if not key or key in seen_tax:
-            continue
-        values = {
-            "odhodek01": normalize_text(raw.get("Odhodek01")),
-            "odhodek07": normalize_text(raw.get("Odhodek07")),
-            "placilo": normalize_text(raw.get("Plačilo")),
-        }
-        if not any(values.values()):
-            continue
-        seen_tax.add(key)
-        db.upsert_account_rule(
-            {
-                "party_kind": "supplier",
-                "match_tax": tax,
-                "match_vat": f"SI{tax}" if tax else "",
-                "match_name": name,
-                "odhodek01": values["odhodek01"],
-                "odhodek07": values["odhodek07"],
-                "placilo": values["placilo"] or "2200",
-                "source": f"accdb:{accdb.name}",
-                "active": True,
-            }
-        )
-        recent_added += 1
-
-    for raw in _as_list(payload.get("rules")):
-        tax = tax_digits(raw.get("DS") or raw.get("Davčna") or raw.get("IŠ za DDV"))
-        name = normalize_text(raw.get("Dobavitelj") or raw.get("Naziv") or raw.get("match_name"))
-        odhodek01 = normalize_text(raw.get("Odhodek01") or raw.get("Konto") or raw.get("KontoOdhodka"))
-        if not (tax or name) or not odhodek01:
-            continue
-        db.upsert_account_rule(
-            {
-                "party_kind": "supplier",
-                "match_tax": tax,
-                "match_vat": f"SI{tax}" if tax else "",
-                "match_name": name,
-                "odhodek01": odhodek01,
-                "odhodek07": normalize_text(raw.get("Odhodek07")),
-                "placilo": normalize_text(raw.get("Plačilo") or raw.get("KontoPlacila") or "2200"),
-                "source": f"pravilo:{accdb.name}",
-                "active": True,
-                "notes": normalize_text(raw.get("Opomba") or raw.get("Opis")),
-            }
-        )
-        rules_added += 1
-
-    learned = db.learn_account_rules_from_rows()
-    return {
-        "from_history": recent_added,
-        "from_rules": rules_added,
-        "from_sqlite_pr": learned.get("pr", 0),
-        "from_sqlite_ir": learned.get("ir", 0),
-    }

@@ -202,6 +202,3 @@ def read_excel_books(files: list[tuple[str, Path]]) -> list[dict[str, Any]]:
         return []
     return books if isinstance(books, list) else [books]
 
-
-def read_account_history(database: Path) -> dict[str, Any]:
-    return run_bridge({"action": "account_history", "database": str(database)})

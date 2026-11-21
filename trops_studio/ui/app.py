@@ -14,7 +14,6 @@ from webbrowser import open as open_url
 from trops_studio import APP_TITLE, __version__
 from trops_studio.accounts import (
     allocate_pr_accounts,
-    import_account_templates_from_accdb,
     remember_customer_rule,
     remember_supplier_rule,
     repair_pr_eu_rows,
@@ -31,7 +30,6 @@ from trops_studio.companies import (
     load_companies,
 )
 from trops_studio.config import (
-    DEFAULT_ACCDB,
     DEFAULT_INTEGRA_SQL,
     DEFAULT_IR_DARILA,
     DEFAULT_IR_EU_REVENUE_ACCOUNT,
@@ -175,7 +173,6 @@ class ProjestStudioApp:
         self.ir_darila_var = tk.StringVar(value=str(DEFAULT_IR_DARILA))
         self.ir_fitnes_var = tk.StringVar(value=str(DEFAULT_IR_FITNES))
         self.pr_var = tk.StringVar(value=str(DEFAULT_PR))
-        self.accdb_var = tk.StringVar(value=str(DEFAULT_ACCDB))
         saved_sql_dir = str(self._session.get("integra_sql_dir") or "").strip()
         self.integra_sql_var = tk.StringVar(
             value=saved_sql_dir or str(DEFAULT_INTEGRA_SQL)
@@ -350,8 +347,6 @@ class ProjestStudioApp:
         open_btn.pack(side="left", padx=(0, 8))
         btn_kirkpr = ttk.Button(proj_btns, text="Uvozi KIR/KPR", command=self.import_kirkpr)
         btn_kirkpr.pack(side="left", padx=(0, 8))
-        btn_accdb = ttk.Button(proj_btns, text="Konti iz ACCDB", command=self.import_accounts)
-        btn_accdb.pack(side="left", padx=(0, 8))
         btn_hist = ttk.Button(proj_btns, text="Konti iz zgodovine", command=self.learn_accounts_from_history)
         btn_hist.pack(side="left")
         ToolTip(
@@ -364,7 +359,6 @@ class ProjestStudioApp:
             "Uvozi FURS KIR/KPR (ZIP, JSON, XML ali CSV) v SQLite — kot v KirKpr Studio.\n"
             "Nato DDV-O in Sinhroniziraj Minimax v tem oknu; ločena KirKpr app ni potrebna.",
         )
-        ToolTip(btn_accdb, "Uvozi kontne predloge iz Access ACCDB (Projest.accdb).")
         ToolTip(btn_hist, "Projest: nauči kontov iz že uvoženih PR/IR v SQLite zgodovini.")
 
         # --- Integra (SQL TROPS) ---
@@ -488,7 +482,6 @@ class ProjestStudioApp:
         file_menu.add_command(label="Uvozi Vasco (3 datoteke)…", command=self.import_vasco_fixed_paths)
         file_menu.add_command(label="Uvozi FURS KIR/KPR…", command=self.import_kirkpr)
         file_menu.add_command(label="Briši uvoz obdobja…", command=self.delete_import_for_period)
-        file_menu.add_command(label="Konti iz ACCDB…", command=self.import_accounts)
         file_menu.add_command(label="Konti iz SQLite zgodovine…", command=self.learn_accounts_from_history)
         file_menu.add_command(label="Kontni plan iz Minimax → SQL…", command=self.sync_minimax_accounts)
         file_menu.add_command(label="Konti Trops → Minimax…", command=self.open_account_map_dialog)
@@ -2071,7 +2064,6 @@ class ProjestStudioApp:
             self.ir_darila_var.set(str(DEFAULT_IR_DARILA))
             self.ir_fitnes_var.set(str(DEFAULT_IR_FITNES))
             self.pr_var.set(str(DEFAULT_PR))
-            self.accdb_var.set(str(DEFAULT_ACCDB))
             self.source_var.set("Uvozi Vasco (IF* / kp*) v SQLite delovno bazo.")
             self.format_var.set("Vir: Vasco → SQLite")
             self._restore_last_vasco_import()
@@ -3171,7 +3163,7 @@ class ProjestStudioApp:
     def _choose_path(self, variable: tk.StringVar) -> None:
         selected = filedialog.askopenfilename(
             parent=self.root,
-            filetypes=(("Excel", "*.xls *.xlsx"), ("Access", "*.accdb"), ("Vse", "*.*")),
+            filetypes=(("Excel", "*.xls *.xlsx *.xlsm"), ("Vse", "*.*")),
         )
         if selected:
             variable.set(selected)
@@ -4905,31 +4897,6 @@ class ProjestStudioApp:
         messagebox.showinfo(
             "Briši uvoz obdobja",
             f"Izbrisano: IR {deleted_ir}, PR {deleted_pr}.",
-            parent=self.root,
-        )
-
-    def import_accounts(self) -> None:
-        path = Path(self.accdb_var.get().strip())
-        if not path.is_file():
-            selected = filedialog.askopenfilename(parent=self.root, filetypes=(("Access", "*.accdb"), ("Vse", "*.*")))
-            if not selected:
-                return
-            path = Path(selected)
-            self.accdb_var.set(str(path))
-        try:
-            result = import_account_templates_from_accdb(self.db, path)
-        except Exception as exc:
-            messagebox.showerror("Konti", str(exc), parent=self.root)
-            return
-        self.refresh_all()
-        self.ir_account_combo.configure(values=self._account_choices("customer"))
-        self.pr_account_combo.configure(values=self._account_choices("supplier"))
-        messagebox.showinfo(
-            "Konti",
-            f"Iz zgodovine ACCDB: {result['from_history']}\n"
-            f"Iz pravil ACCDB: {result['from_rules']}\n"
-            f"Iz SQLite PR: {result.get('from_sqlite_pr', 0)}\n"
-            f"Iz SQLite IR: {result.get('from_sqlite_ir', 0)}",
             parent=self.root,
         )
 
