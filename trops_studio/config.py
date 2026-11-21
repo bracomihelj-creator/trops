@@ -4,9 +4,9 @@ Vse poti na D:\ (Trops podatki, EvidencaFirm, KirKpr …) so zbrane tukaj.
 Privzete vrednosti so ENAKE kot v 4.0.01. Po želji jih prepišeš v
 ``settings.json`` (ali ``settings.local.json``) v korenu aplikacije, npr.::
 
-    {"data_dir": "D:\\PISARNA\\Python\\Trops_v4\\data", "trops_root": "D:\\Trops"}
+    {"trops_root": "D:\\Trops", "integra_sql_dir": "D:\\Trops\\20\\SQL"}
 
-Prazna ali manjkajoča vrednost = privzeto.
+Prazna ali manjkajoča vrednost = privzeto (baze: ``Trops_v5\\data``).
 """
 from __future__ import annotations
 

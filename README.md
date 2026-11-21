@@ -10,7 +10,7 @@ obrazec **DDV-O** (XML za eDavke, PDF, virman UPN QR, e-pošta stranki) in sinhr
 ## Namestitev
 
 1. Razpakiraj v `D:\PISARNA\Python\Trops_v5`.
-2. `py -3.10 -m pip install -r requirements.txt` (ali dvoklik `INSTALL.pyw`, ki ponudi tudi **kopijo** baz iz `..\Trops_v4\data`).
+2. `py -3.10 -m pip install -r requirements.txt` (ali dvoklik `INSTALL.pyw`).
 3. Zagon: `Zazeni_Trops_Studio_V5.bat` ali `Trops_Studio_V5.0.00.pyw`.
 
 ## Struktura
@@ -37,7 +37,7 @@ Vsako vrednost lahko prepiše tudi okoljska spremenljivka `TROPS_<KLJUČ>`, npr.
 
 | Ključ | Privzeto | Pomen |
 |---|---|---|
-| `data_dir` | `Trops_v5\data` | mapa SQLite baz. Za skupne baze z v4 nastavi `D:\\PISARNA\\Python\\Trops_v4\\data`. |
+| `data_dir` | `Trops_v5\data` | mapa SQLite baz. Pusti prazno — baze so v `Trops_v5\data`. |
 | `trops_root` | `D:\Trops` | podatki TROPS po Zšt (`{Zšt}\DDV`, `{Zšt}\MiniMax`, `dat\KONT*.DBF`) |
 | `integra_sql_dir` | `D:\Trops\20\SQL` | ZIP/BAK kopije Integra SQL |
 | `evidenca_firm_root` | `D:\PISARNA\Python\EvidencaFirm` | evidenca firm (`firme_evidenca.json`, AJPES moduli) |

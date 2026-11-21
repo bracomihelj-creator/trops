@@ -20,43 +20,6 @@ def _run(cmd: list[str]) -> tuple[int, str]:
         return 1, str(exc)
 
 
-def _offer_v4_data_copy(messagebox) -> None:
-    """Ponudi KOPIJO (ne premik) podatkov iz ..\\Trops_v4\\data, če v5 še nima baz. v4 ostane nespremenjen."""
-    import shutil
-
-    v4_data = ROOT.parent / "Trops_v4" / "data"
-    v5_data = ROOT / "data"
-    if not v4_data.is_dir() or any(v5_data.glob("*.sqlite3")):
-        return
-    names = [p.name for p in v4_data.glob("*.sqlite3")]
-    if not names:
-        return
-    if not messagebox.askyesno(
-        "Trops Studio 5.0.00 — podatki",
-        "V5 še nima lokalnih baz.\n\n"
-        f"Kopiram baze in nastavitve iz:\n{v4_data}\n\n"
-        f"({len(names)} baz: {', '.join(sorted(names)[:6])}{' …' if len(names) > 6 else ''})\n\n"
-        "Kopija — v4 ostane nespremenjen. Ne = začni s prazno mapo data\\ "
-        "(ali v settings.json nastavi data_dir).",
-    ):
-        return
-    v5_data.mkdir(parents=True, exist_ok=True)
-    skip = {"webview2_profile", "logs", "__pycache__"}
-    copied = 0
-    for src in v4_data.iterdir():
-        if src.name in skip or src.name.startswith("_"):
-            continue
-        dst = v5_data / src.name
-        if dst.exists():
-            continue
-        if src.is_dir():
-            shutil.copytree(src, dst)
-        else:
-            shutil.copy2(src, dst)
-        copied += 1
-    messagebox.showinfo("Trops Studio 5.0.00", f"Kopiranih {copied} datotek/map v {v5_data}.")
-
-
 def main() -> int:
     import tkinter as tk
     from tkinter import messagebox
@@ -95,8 +58,6 @@ def main() -> int:
             wv_ok = True
         except ImportError:
             wv_ok = False
-
-    _offer_v4_data_copy(messagebox)
 
     msg = (
         "Trops Studio 5.0.00 pripravljen (vzorec Evidence 8).\n\n"
