@@ -83,7 +83,6 @@ POWERSHELL_32 = Path(r"C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe
 PISARNA_PYTHON = setting_path("pisarna_python", r"D:\PISARNA\Python")
 EVIDENCA_FIRM_ROOT = setting_path("evidenca_firm_root", PISARNA_PYTHON / "EvidencaFirm")
 KIRKPR_CURSOR_ROOT = setting_path("kirkpr_cursor_root", PISARNA_PYTHON / "KirKpr_convert_cursor")
-KIRKPR_LEGACY_ROOT = setting_path("kirkpr_legacy_root", PISARNA_PYTHON / "KirKpr_convert")
 CHROME_ADD_ROOT = setting_path("chrome_add_root", PISARNA_PYTHON / "Chrome_add")
 SMTP_SECRET_CANDIDATES = (
     CHROME_ADD_ROOT / "Minimax_forward" / "server" / "smtp_secret.bin",

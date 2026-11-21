@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Any, Mapping
 
-from trops_studio.config import EVIDENCA_FIRM_ROOT, KIRKPR_CURSOR_ROOT, KIRKPR_LEGACY_ROOT
+from trops_studio.config import EVIDENCA_FIRM_ROOT, KIRKPR_CURSOR_ROOT
 
 REGISTRY_CANDIDATES = (
     EVIDENCA_FIRM_ROOT / "data" / "firme_evidenca.json",
@@ -94,11 +94,8 @@ def is_active(record: Mapping[str, Any]) -> bool:
 
 
 def load_companies() -> tuple[Path | None, list[dict[str, Any]]]:
-    # Prefer Cursor KirKpr registry, then legacy.
-    for kirkpr in (
-        KIRKPR_CURSOR_ROOT,
-        KIRKPR_LEGACY_ROOT,
-    ):
+    # Register podjetij iz KirKpr_convert_cursor, sicer Evidenca firm (JSON).
+    for kirkpr in (KIRKPR_CURSOR_ROOT,):
         if kirkpr.is_dir() and str(kirkpr) not in sys.path:
             sys.path.insert(0, str(kirkpr))
         try:

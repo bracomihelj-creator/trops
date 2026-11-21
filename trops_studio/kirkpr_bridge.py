@@ -5,7 +5,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from trops_studio.config import KIRKPR_CURSOR_ROOT, KIRKPR_LEGACY_ROOT, PACKAGE_ROOT
+from trops_studio.config import KIRKPR_CURSOR_ROOT, PACKAGE_ROOT
 
 VENDOR_ROOT = PACKAGE_ROOT / "vendor_kirkpr"
 
@@ -13,12 +13,13 @@ VENDOR_ROOT = PACKAGE_ROOT / "vendor_kirkpr"
 def ensure_kirkpr_on_path() -> Path:
     """
     Prednost: trops_studio/vendor_kirkpr (samostojen Minimax/DDV-O).
-    Fallback: KirKpr_convert_cursor / legacy (za manjkajoče module).
+    Fallback: KirKpr_convert_cursor (moduli, ki jih v vendor_kirkpr ni: kirkpr_upn_qr,
+    kirkpr_ajpes_iban, kirkpr_ddvo_placeholder_texts …).
     """
     roots: list[Path] = []
     if VENDOR_ROOT.is_dir():
         roots.append(VENDOR_ROOT)
-    for root in (KIRKPR_CURSOR_ROOT, KIRKPR_LEGACY_ROOT):
+    for root in (KIRKPR_CURSOR_ROOT,):
         if root.is_dir():
             roots.append(root)
     if not roots:
@@ -37,7 +38,7 @@ def ensure_kirkpr_on_path() -> Path:
 
 def minimax_xsd_path() -> Path:
     ensure_kirkpr_on_path()
-    for root in (VENDOR_ROOT, KIRKPR_CURSOR_ROOT, KIRKPR_LEGACY_ROOT):
+    for root in (VENDOR_ROOT, KIRKPR_CURSOR_ROOT):
         path = root / "miniMAXUvozKnjigovodstvo.xsd"
         if path.is_file():
             return path
@@ -46,7 +47,7 @@ def minimax_xsd_path() -> Path:
 
 def ddvo_transforms_dir() -> Path:
     ensure_kirkpr_on_path()
-    for root in (VENDOR_ROOT, KIRKPR_CURSOR_ROOT, KIRKPR_LEGACY_ROOT):
+    for root in (VENDOR_ROOT, KIRKPR_CURSOR_ROOT):
         path = root / "ddvo_transforms"
         if path.is_dir():
             return path
