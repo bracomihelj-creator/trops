@@ -1,7 +1,7 @@
 """
 Integra: UrejanjeKisanal → SQLite (namesto kisanal.dbf / popa.dbf).
 
-Access (INTEGRA_za_MINIMAX.accdb) dela:
+Postopek (enak kot nekdanji makro UrejanjeKisanal; Access ni več potreben):
   1) zbriši popa_dbf
   2) Append dbo_POPA → popa_dbf
   3) zbriši kisanal_dbf za obdobje
@@ -24,7 +24,6 @@ from trops_studio.integra_sql import IntegraSqlError, TropsSqlTarget
 from trops_studio.integra_trops_client import fetch_all, open_trops_connection
 
 from trops_studio.config import DEFAULT_KONT_DBF, KONT_DBF_FALLBACKS
-INTEGRA_ACCDB = TROPS_ROOT / "20" / "INTEGRA_za_MINIMAX.accdb"
 
 
 SCHEMA_SQL = """

@@ -212,8 +212,7 @@ class IntegraDialog(tk.Toplevel):
         btn_kis.pack(side="left", padx=(8, 0))
         ToolTip(
             btn_kis,
-            "Kot Call UrejanjeKisanal v INTEGRA_za_MINIMAX.accdb,\n"
-            "ampak v SQLite (popa + kisanal), ne kisanal.dbf.\n"
+            "UrejanjeKisanal v SQLite (popa + kisanal), brez Accessa in kisanal.dbf.\n"
             "Zamenjava kontov iz KONT*.DBF za izbrano leto,\n"
             "nato samodejni prenos IR/PR za isto obdobje.",
         )

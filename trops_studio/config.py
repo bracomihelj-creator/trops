@@ -82,16 +82,13 @@ DEFAULT_TROPS = TROPS_ROOT / "21"
 DEFAULT_IR_DARILA = DEFAULT_TROPS / "DDV" / "IF DARILA.xls"
 DEFAULT_IR_FITNES = DEFAULT_TROPS / "DDV" / "IF FITNES.xls"
 DEFAULT_PR = DEFAULT_TROPS / "DDV" / "KPF.xls"
-DEFAULT_ACCDB = DEFAULT_TROPS / "Projest.accdb"
 DEFAULT_MINIMAX_OUT = DEFAULT_TROPS / "MiniMax"
 
 # Integra (Zšt 20) — SQL TROPS backup / obdelava
 DEFAULT_INTEGRA_TROPS = TROPS_ROOT / "20"
 DEFAULT_INTEGRA_SQL = setting_path("integra_sql_dir", DEFAULT_INTEGRA_TROPS / "SQL")
-DEFAULT_INTEGRA_ACCDB = DEFAULT_INTEGRA_TROPS / "INTEGRA_za_MINIMAX.accdb"
 DEFAULT_KONT_DBF = setting_path("kont_dbf", r"D:\Trops\dat\KONT2005.DBF")
 KONT_DBF_FALLBACKS = (TROPS_ROOT / "dat" / "KONT.DBF", TROPS_ROOT / "dat" / "KONTO.DBF")
-MINIMAX_ACCDB = setting_path("minimax_accdb", r"D:\PISARNA\Programs\Minimax.accdb")
 
 POWERSHELL_32 = Path(r"C:\Windows\SysWOW64\WindowsPowerShell\v1.0\powershell.exe")
 PISARNA_PYTHON = setting_path("pisarna_python", r"D:\PISARNA\Python")
