@@ -13,7 +13,6 @@ from __future__ import annotations
 import json
 import os
 import re
-import shutil
 from pathlib import Path
 from typing import Any
 
@@ -57,7 +56,6 @@ LOG_DIR = DATA_DIR / "logs"
 WEBVIEW_PROFILE_DIR = setting_path("webview_profile_dir", DATA_DIR / "webview2_profile")
 # Privzeta / nedejavna baza (brez izbranega podjetja).
 DEFAULT_DB = DATA_DIR / "trops_idle.sqlite3"
-LEGACY_PROJEST_DB = DATA_DIR / "projest.sqlite3"
 
 
 def company_db_path(zst: str | int | None) -> Path:
@@ -67,15 +65,6 @@ def company_db_path(zst: str | int | None) -> Path:
         return DEFAULT_DB
     return DATA_DIR / f"zst-{int(digits)}.sqlite3"
 
-
-def migrate_legacy_projest_db() -> Path | None:
-    """projest.sqlite3 → zst-21.sqlite3 (enkrat, če cilj še ne obstaja)."""
-    target = company_db_path(21)
-    DATA_DIR.mkdir(parents=True, exist_ok=True)
-    if LEGACY_PROJEST_DB.is_file() and not target.is_file():
-        shutil.copy2(LEGACY_PROJEST_DB, target)
-        return target
-    return None
 
 TROPS_ROOT = setting_path("trops_root", r"D:\Trops")
 DEFAULT_TROPS = TROPS_ROOT / "21"

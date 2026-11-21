@@ -41,7 +41,6 @@ from trops_studio.config import (
     DEFAULT_PR_EXPENSE_ACCOUNT,
     TROPS_ROOT,
     company_db_path,
-    migrate_legacy_projest_db,
 )
 from trops_studio.db import Database
 from trops_studio.excel_map import import_vasco_files_to_db
@@ -153,7 +152,6 @@ NAVIGATION_MIN_WIDTH = 220
 class ProjestStudioApp:
     def __init__(self, root: tk.Tk, db: Database | None = None) -> None:
         self.root = root
-        migrate_legacy_projest_db()
         self.db = db or Database()
         self.ui_prefs = load_ui_prefs()
         self.colors = apply_style(root, self.ui_prefs)

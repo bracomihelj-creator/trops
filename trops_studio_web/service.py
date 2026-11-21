@@ -32,7 +32,6 @@ from trops_studio.config import (
     DEFAULT_IR_REVENUE_ACCOUNT,
     DEFAULT_PR_EXPENSE_ACCOUNT,
     company_db_path,
-    migrate_legacy_projest_db,
 )
 from trops_studio.db import Database
 from trops_studio.ddvo_calc import compute_ddvo as run_compute_ddvo, ir_row_to_kir, pr_row_to_kpr
@@ -94,7 +93,6 @@ def _safe(value: Any) -> Any:
 
 class AppService:
     def __init__(self) -> None:
-        migrate_legacy_projest_db()
         self._lock = threading.RLock()
         self.progress_callback = None
         self._session = load_session()
