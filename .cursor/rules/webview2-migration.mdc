@@ -1,0 +1,38 @@
+---
+description: Trops Studio 4.0.01 WebView2 — vzorec Evidence 8 / Pooblastila / Fakturiranje QUICK
+globs: host.py,motor.py,ui/**/*,Trops_Studio*.pyw,INSTALL.pyw,trops_studio_web/**/*,docs/WEBVIEW2*.md
+alwaysApply: true
+---
+
+# Trops Studio 4.0.01 — WebView2 (zaklenjen vzorec)
+
+Obvezno: `D:\PISARNA\Python\Navodila_PROMPT\MASTER_PROMPT_QUICK_WEBVIEW2.md`
+
+## Vzorec (kot Evidence 8 + Pooblastila)
+```
+Trops_v4/
+  Trops_Studio_V4.0.01.pyw  → host.desktop()
+  host.py                   → HTTP AppServer + Bridge (datoteke) + webview edgechromium
+  motor.py                  → Motor(AppService) — poslovno jedro
+  ui/index.html + app.css + app.js   ← edini LOOK (fetch /api/*)
+  trops_studio/             → 100 % poslovna logika (NE prepisuj zaradi LOOK)
+  trops_studio_web/service.py
+```
+- **Ni** podvojenega `trops_studio_web/ui/`, **ni** ločenega js_api mosta za poslovne akcije.
+- js_api = samo `Bridge` (pick_file / pick_folder / close_window), kot Evidence 8.
+- UI kliče `fetch('/api/...')` + `POST /api/action` (kot Evidence).
+- QUICK paleta: `--bg:#f4f7fc`, `--accent:#5968e8`, radius 11–17 px.
+- Levi panel: PODJETJA + VSEBINA (drevo). Brez zgornjih Notebook zavihkov.
+
+## Verzije
+- Stabilna Tk: `D:\PISARNA\Python\Trops` **3.0.03** (nedotaknjena).
+- Nova: `D:\PISARNA\Python\Trops_v4` **4.0.01**.
+
+## Chrome CDP
+- **Ni** potreben za LOOK.
+- Ostane samo za opcijski Minimax OS fill (`minimax_os_fill`) — poslovni motor, ne UI.
+
+## Prepovedano
+- Spreminjanje DDV/AOP, Minimax payloadov, SQL sheme, Integra RESTORE.
+- Demo gumbi / prazne funkcije / vidni Tk dialogi v LOOK.
+- Mešanje Integra ↔ Projest pravil.

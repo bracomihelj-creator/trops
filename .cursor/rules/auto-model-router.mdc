@@ -1,0 +1,25 @@
+---
+description: Samodejna izbira kdo piše kodo — velja povsod (brez vprašanja uporabniku)
+alwaysApply: true
+---
+
+# Avtomatski router za kodiranje (vsi projekti)
+
+Uporabnik **ne želi** izbirati modela. Agent (Auto) **sam** odloči, kdo dela kodo, in **ne sprašuje** »Grok ali Claude?«.
+
+## Privzeto
+
+- **Lokalne popravke, bugfix, UI, integracije, verzije** → delaj **neposredno v tem agentu** (brez nepotrebnega subagenta).
+- **Široko raziskovanje neznanega dela kode** → `Task` / explore (hitro).
+- **Vzporedne neodvisne naloge** → več `Task` hkrati.
+- **Težka arhitektura / varnost / velik refactor** → po potrebi `Task` z močnejšim reasoning modelom iz dovoljenega seznama; sicer `inherit`.
+
+## Ne
+
+- Ne sprašuj uporabnika za izbiro modela, razen če **izrecno** zahteva določen model.
+- Ne delegiraj cele preproste naloge v subagenta »za spektakel«.
+- Ne omenjaj notranjih imen modelov (kebab-case), razen če uporabnik to vpraša.
+
+## Po končani nalogi
+
+Kratko povej, **kaj** je narejeno; **ne** razlagaj, zakaj si izbral model, razen če vpraša.

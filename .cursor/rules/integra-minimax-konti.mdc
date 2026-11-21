@@ -1,0 +1,50 @@
+---
+description: Integra Trops → Minimax kontni plan (mapiranje šifer)
+globs: trops_studio/account_choices.py,trops_studio/integra_irpr.py,trops_studio/accounts.py,trops_studio/ui/account_map_dialog.py
+alwaysApply: true
+---
+
+# Integra: Trops konti → Minimax API
+
+## Obvezno vedenje
+
+1. Vedno preveri skladnost kontov z Minimax knjižljivim planom (`minimax_accounts`, `AllowedPosting` ≠ N).
+2. Če Trops konto ni knjižljiv / ni mapiran → odpri dialog **Konti Trops → Minimax** (`AccountMapDialog` / `ensure_accounts_mapped`).
+3. Po potrditvi shrani v SQL tabelo `account_code_map` (za naslednjič) in po želji prepiši kisanal / IR / PR / journal_lines.
+4. Velja za **vse knjižbe**, **IR** in **PR**.
+
+## Kje živi logika
+
+- Defaults: `TROPS_TO_MINIMAX_DEFAULTS` v `account_choices.py`
+- SQL: `account_code_map` + `Database.upsert_account_code_maps` / `apply_account_code_maps_to_data`
+- Coerce: `coerce_minimax_bookable_account` (SQL mapa + defaults + sibling/nearest …x→…0)
+- UI: `trops_studio/ui/account_map_dialog.py`
+- Klici: pred **Prenos v IR/PR**, po **UrejanjeKisanal**, meni **Konti Trops → Minimax…**, gumb na **Vse knjižbe**
+
+## Privzeta mapiranja (seed)
+
+| Trops | Minimax |
+|-------|---------|
+| 7622 | 7620 |
+| 7409 | 7400 |
+| 4061 | 4060 |
+| 4071 | 4070 |
+| 4111 | 4190 |
+| 4119 | 4110 |
+| 4151 | 4150 |
+| 4191 / 4199 | 4190 |
+| 4735 | 4730 |
+| 4896 | 4890 |
+| 6526 / 6527 / 660 / 66 | 6500 |
+| 1600-0 / 1600 | 16000 |
+| 1600-1 | 16001 |
+| 1600-8 | 16040 |
+| 2600-0 / 2600-2 / 2600 | 26000 |
+| 2600-8 / 260-80 | 26040 |
+| 1006 | 1000 |
+| 1619 | 1610 |
+| 1762 | 1760 |
+| 2555 | 2550 |
+| 2629 | 2620 |
+
+Org Integra: `179531`. Nova zamenjava iz dialoga gre v SQL; trajne dodaj tudi v `TROPS_TO_MINIMAX_DEFAULTS`.

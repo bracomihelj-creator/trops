@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="sl" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trops Studio 5.0.00</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="/ui/app.css">
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-in" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></symbol>
+    <symbol id="i-out" viewBox="0 0 24 24"><path d="M4 7h16v13H4zM4 7l2-4h12l2 4M9 12h6"/></symbol>
+    <symbol id="i-tax" viewBox="0 0 24 24"><path d="M4 4h16v16H4zM8 16 16 8"/><circle cx="9" cy="9" r="1.5"/><circle cx="15" cy="15" r="1.5"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2zM4 5v16M8 7h7"/></symbol>
+    <symbol id="i-tree" viewBox="0 0 24 24"><path d="M5 4h5v5H5zM14 15h5v5h-5zM14 4h5v5h-5zM7.5 9v8.5H14M10 6.5h4"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14a5.5 5.5 0 0 1 3.5 6"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></symbol>
+    <symbol id="i-db" viewBox="0 0 24 24"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></symbol>
+    <symbol id="i-sync" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4"/></symbol>
+    <symbol id="i-down" viewBox="0 0 24 24"><path d="M12 4v12M7 11l5 5 5-5M4 20h16"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+    <symbol id="i-plug" viewBox="0 0 24 24"><path d="M9 2v6M15 2v6M6 8h12v4a6 6 0 0 1-12 0zM12 18v4"/></symbol>
+    <symbol id="i-cog" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-win" viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 9h18"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-2.6-6.4L21 8M21 3v5h-5"/></symbol>
+    <symbol id="i-chev-l" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+    <symbol id="i-chev-r" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-chev-d" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V5l8-3v19M12 9h8v12M8 8h.01M8 12h.01M8 16h.01M16 13h.01M16 17h.01M2 21h20"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><path d="M4 5h16v16H4zM4 10h16M8 3v4M16 3v4"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3H6v18h12V7zM14 3v4h4"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><path d="M3 5h18v14H3zM3 6l9 7 9-7"/></symbol>
+    <symbol id="i-bank" viewBox="0 0 24 24"><path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="M3 12V3h9l9 9-9 9z"/><circle cx="7.5" cy="7.5" r="1.5"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h6l2 2h10v11H3z"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 20h20zM12 10v4M12 17h.01"/></symbol>
+  </defs>
+</svg>
+
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo">T</div>
+      <div class="brandText"><b>Trops Studio</b><span id="brandVer">5.0.00</span></div>
+    </div>
+
+    <nav class="nav" id="nav">
+      <div class="navLbl">Evidence</div>
+      <button class="navItem active" data-view="ir"><svg><use href="#i-in"/></svg><span>Izdani računi</span><em id="navCntIr"></em></button>
+      <button class="navItem" data-view="pr"><svg><use href="#i-out"/></svg><span>Prejeti računi</span><em id="navCntPr"></em></button>
+      <button class="navItem" data-view="ddvo"><svg><use href="#i-tax"/></svg><span>Obrazec DDV-O</span></button>
+      <div class="navLbl">Knjige in konti</div>
+      <button class="navItem" data-view="knjiga_ir"><svg><use href="#i-book"/></svg><span>Knjiga IR</span></button>
+      <button class="navItem" data-view="knjiga_pr"><svg><use href="#i-book"/></svg><span>Knjiga PR</span></button>
+      <button class="navItem" data-view="konti"><svg><use href="#i-tree"/></svg><span>Konti</span></button>
+      <button class="navItem" data-view="knjizbe"><svg><use href="#i-list"/></svg><span>Vse knjižbe</span></button>
+      <div class="navLbl">Ostalo</div>
+      <button class="navItem" data-view="parties"><svg><use href="#i-users"/></svg><span>Stranke</span><em id="navCntParties"></em></button>
+      <button class="navItem" data-view="analysis"><svg><use href="#i-chart"/></svg><span>Analitika</span></button>
+    </nav>
+
+    <div class="sideTools">
+      <div class="navLbl">Orodja</div>
+      <div class="menuGroup">
+        <button class="navItem" data-menu="import"><svg><use href="#i-upload"/></svg><span>Uvoz</span><svg class="chev"><use href="#i-chev-r"/></svg></button>
+        <div class="flyout" data-flyout="import">
+          <button data-act="import_vasco"><svg><use href="#i-file"/></svg>Uvozi Vasco Excel…</button>
+          <button data-act="import_kirkpr"><svg><use href="#i-file"/></svg>Uvozi FURS KIR/KPR…</button>
+          <button data-act="integra"><svg><use href="#i-db"/></svg>Integra SQL TROPS…</button>
+          <hr>
+          <button data-act="learn_accounts"><svg><use href="#i-tag"/></svg>Konti iz zgodovine</button>
+          <button data-act="delete_import" class="danger"><svg><use href="#i-trash"/></svg>Briši uvoz obdobja…</button>
+        </div>
+      </div>
+      <div class="menuGroup">
+        <button class="navItem" data-menu="minimax"><svg><use href="#i-sync"/></svg><span>Minimax</span><svg class="chev"><use href="#i-chev-r"/></svg></button>
+        <div class="flyout" data-flyout="minimax">
+          <button data-act="sync_parties"><svg><use href="#i-down"/></svg>1 · Stranke iz Minimax</button>
+          <button data-act="missing"><svg><use href="#i-users"/></svg>3 · Manjkajoče stranke…</button>
+          <button data-act="sync_ready"><svg><use href="#i-sync"/></svg>5 · Sinhroniziraj…</button>
+          <hr>
+          <button data-act="export_kirkpr_xml"><svg><use href="#i-file"/></svg>Izvozi XML za KirKpr</button>
+          <button data-act="check_api"><svg><use href="#i-plug"/></svg>Preveri Minimax API</button>
+          <button data-act="mrn"><svg><use href="#i-down"/></svg>eDavki MRN prenesi</button>
+        </div>
+      </div>
+      <div class="menuGroup">
+        <button class="navItem" data-menu="settings"><svg><use href="#i-cog"/></svg><span>Nastavitve</span><svg class="chev"><use href="#i-chev-r"/></svg></button>
+        <div class="flyout" data-flyout="settings">
+          <button data-act="integra"><svg><use href="#i-folder"/></svg>Integra SQL mapa…</button>
+          <button data-act="classic"><svg><use href="#i-win"/></svg>Klasični urejevalnik (Tk)…</button>
+          <button data-act="theme"><svg><use href="#i-moon"/></svg>Svetla / temna tema</button>
+          <hr>
+          <button data-act="about"><svg><use href="#i-info"/></svg>O programu</button>
+          <button data-act="close"><svg><use href="#i-x"/></svg>Izhod</button>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main">
+    <header class="topbar">
+      <div class="titleBlock">
+        <h1 id="viewTitle">Izdani računi</h1>
+        <div class="crumbs" id="viewSub">—</div>
+      </div>
+
+      <div class="topControls">
+        <div class="picker" id="companyPicker">
+          <button class="pickBtn" id="companyBtn" title="Izberi podjetje">
+            <svg><use href="#i-building"/></svg>
+            <span class="pickTxt"><small>Podjetje</small><b id="companyName">—</b></span>
+            <svg class="chev"><use href="#i-chev-d"/></svg>
+          </button>
+          <div class="popover" id="companyPop" hidden>
+            <div class="searchBox"><svg><use href="#i-search"/></svg><input id="companySearch" placeholder="Išči Zšt, naziv, davčno, Org…" autocomplete="off"></div>
+            <div class="popWarn" id="companyWarn" hidden></div>
+            <div class="companyList" id="companyList"></div>
+          </div>
+        </div>
+
+        <div class="periodCtl">
+          <button class="iconBtn" id="btnPrevPeriod" title="Prejšnje obdobje"><svg><use href="#i-chev-l"/></svg></button>
+          <div class="picker">
+            <button class="pickBtn" id="periodBtn" title="Obdobje">
+              <svg><use href="#i-cal"/></svg>
+              <span class="pickTxt"><small id="periodLbl">Obdobje</small><b id="periodRange">—</b></span>
+              <svg class="chev"><use href="#i-chev-d"/></svg>
+            </button>
+            <div class="popover periodPop" id="periodPop" hidden>
+              <div class="popRow">
+                <label class="fld"><span>Obdobje</span><select id="periodChoice"></select></label>
+                <label class="fld"><span>Leto</span><input id="periodYear" type="number" min="2000" max="2100"></label>
+              </div>
+              <button class="btn primary block" id="btnApplyChoice">Uporabi obdobje</button>
+              <div class="sep"><span>ali po meri</span></div>
+              <div class="popRow">
+                <label class="fld"><span>Od</span><input type="date" id="periodFrom"></label>
+                <label class="fld"><span>Do</span><input type="date" id="periodTo"></label>
+              </div>
+              <div class="popRow">
+                <button class="btn block" id="btnApplyPeriod">Uporabi datume</button>
+                <button class="btn ghost block" id="btnResetPeriod">Vsa obdobja</button>
+              </div>
+            </div>
+          </div>
+          <button class="iconBtn" id="btnNextPeriod" title="Naslednje obdobje"><svg><use href="#i-chev-r"/></svg></button>
+        </div>
+
+        <button class="iconBtn" id="btnRefresh" title="Osveži (F5)"><svg><use href="#i-refresh"/></svg></button>
+        <button class="iconBtn" id="btnTheme" title="Tema"><svg><use href="#i-moon"/></svg></button>
+        <button class="btn primary" id="btnSync" title="Sinhroniziraj potrjene IR/PR z Minimax"><svg><use href="#i-sync"/></svg>Sinhroniziraj</button>
+      </div>
+    </header>
+
+    <div class="alerts" id="alerts"></div>
+    <section class="kpis" id="kpis"></section>
+    <section class="toolbar" id="toolbar"></section>
+    <section class="content" id="content"></section>
+
+    <footer class="statusbar">
+      <span class="dot" id="statusDot"></span><span id="statusText">Pripravljeno.</span>
+      <span class="grow"></span>
+      <span class="muted" id="dbPath"></span>
+      <span class="muted">F5 osveži · Esc zapre okno · dvoklik uredi vrstico</span>
+    </footer>
+  </div>
+</div>
+
+<div class="modalWrap" id="modal" hidden>
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="modalHead"><h2 id="modalTitle"></h2><button class="iconBtn sm" id="modalX" title="Zapri"><svg><use href="#i-x"/></svg></button></div>
+    <div class="modalBody" id="modalBody"></div>
+    <div class="modalFoot" id="modalFoot"></div>
+  </div>
+</div>
+
+<div class="jobWrap" id="job" hidden>
+  <div class="jobCard">
+    <div class="spinner lg"></div>
+    <h3 id="jobTitle">Delam…</h3>
+    <p id="jobMsg" class="muted"></p>
+    <div class="progress"><div id="jobBar"></div></div>
+    <p class="muted small">Okno ostane odzivno — rezultat se pokaže, ko je naloga končana.</p>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<script src="/ui/app.js"></script>
+</body>
+</html>

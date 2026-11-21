@@ -1,0 +1,171 @@
+{
+  "form": "DDV-O",
+  "version": "e-DDV_O_11.7",
+  "source": "edavki.durs.si Documents/View.aspx zajem 2026-07-19",
+  "sample": {
+    "taxpayer": "KLUG SVETOVANJE D.O.O.",
+    "vat_id_01": "SI49142275",
+    "period_from": "2026-01-01",
+    "period_to": "2026-03-31",
+    "document_no": "EDP-49142275-376"
+  },
+  "header": [
+    {"code": "period", "label": "Za obdobje"},
+    {"code": "samoprijava", "label": "Samoprijava"},
+    {"code": "po_roku", "label": "Vloga za predložitev po roku"},
+    {"code": "firma", "label": "Firma / Ime in priimek"},
+    {"code": "01", "label": "Identifikacijska številka za DDV [01]"},
+    {"code": "sedez", "label": "Sedež / Stalno prebivališče"},
+    {"code": "02", "label": "Identifikacijska številka za DDV zastopnika [02]"},
+    {"code": "id_evidenc", "label": "ID Evidenc"}
+  ],
+  "sections": [
+    {
+      "id": "I",
+      "title": "I. Dobave blaga in storitev (vrednosti so brez DDV)",
+      "unit": "V EUR",
+      "layout": "rows",
+      "fields": [
+        {"code": "11", "label": "Dobava blaga in storitev", "book": "KIR", "source": ["P7"]},
+        {"code": "11a", "label": "Dobava blaga in storitev v Sloveniji od katerih obračuna DDV prejemnik", "book": "KIR", "source": ["P8"]},
+        {"code": "12", "label": "Dobave blaga in storitev v druge države članice EU", "book": "KIR", "source": ["P10", "P11"]},
+        {"code": "13", "label": "Prodaja blaga na daljavo", "book": "KIR", "source": ["P12"]},
+        {"code": "14", "label": "Montaža in instaliranje blaga v drugi državi članici", "book": "KIR", "source": ["P13"]},
+        {"code": "15", "label": "Oproščene dobave brez pravice do odbitka DDV", "book": "KIR", "source": ["P9"]}
+      ]
+    },
+    {
+      "id": "II",
+      "title": "II. Obračunani DDV",
+      "layout": "rate_matrix",
+      "columns": [
+        {"key": "22", "label": "22,00%"},
+        {"key": "9_5", "label": "9,50%"},
+        {"key": "5", "label": "5,00%"},
+        {"key": "other", "label": "Drugo"}
+      ],
+      "rows": [
+        {
+          "label": "po stopnji",
+          "cells": [
+            {"code": "21", "column": "22"},
+            {"code": "22", "column": "9_5"},
+            {"code": "22a", "column": "5"}
+          ]
+        },
+        {
+          "label": "od pridobitev blaga iz drugih držav članic EU po stopnji",
+          "cells": [
+            {"code": "23", "column": "22"},
+            {"code": "24", "column": "9_5"},
+            {"code": "24b", "column": "5"}
+          ]
+        },
+        {
+          "label": "od prejetih storitev iz drugih držav članic EU po stopnji",
+          "cells": [
+            {"code": "23a", "column": "22"},
+            {"code": "24a", "column": "9_5"},
+            {"code": "24c", "column": "5"}
+          ]
+        },
+        {
+          "label": "na podlagi samoobdavčitve kot prejemnik blaga in storitev po stopnji",
+          "cells": [
+            {"code": "25", "column": "22"},
+            {"code": "25a", "column": "9_5"},
+            {"code": "25b", "column": "5"}
+          ]
+        },
+        {
+          "label": "na podlagi samoobdavčitve od uvoza",
+          "cells": [
+            {"code": "26", "column": "22"}
+          ]
+        }
+      ],
+      "sources": {
+        "21": {"book": "KIR", "source": ["P14"]},
+        "22": {"book": "KIR", "source": ["P15"]},
+        "22a": {"book": "KIR", "source": ["P16"]},
+        "23": {"book": "KIR", "source": ["P17"]},
+        "23a": {"book": "KIR", "source": ["P18"]},
+        "24": {"book": "KIR", "source": ["P19"]},
+        "24a": {"book": "KIR", "source": ["P20"]},
+        "24b": {"book": "KIR", "source": ["P21"]},
+        "24c": {"book": "KIR", "source": ["P22"]},
+        "25": {"book": "KIR", "source": ["P23"]},
+        "25a": {"book": "KIR", "source": ["P24"]},
+        "25b": {"book": "KIR", "source": ["P25"]},
+        "26": {"book": "KIR", "source": ["P26"]}
+      }
+    },
+    {
+      "id": "III",
+      "title": "III. Nabave blaga in storitev (vrednosti so brez DDV)",
+      "layout": "rows",
+      "fields": [
+        {"code": "31", "label": "Nabave blaga in storitev", "book": "KPR", "source": ["P8"]},
+        {"code": "31a", "label": "Nabave blaga in storitev v Sloveniji od katerih obračuna DDV prejemnik", "book": "KPR", "source": ["P9"]},
+        {"code": "32", "label": "Pridobitve blaga iz drugih držav članic EU", "book": "KPR", "source": ["P10"]},
+        {"code": "32a", "label": "Prejete storitve iz drugih držav članic EU", "book": "KPR", "source": ["P11"]},
+        {"code": "33", "label": "Oproščene nabave blaga in storitve in oproščene pridobitve blaga", "book": "KPR", "source": ["P14"]},
+        {"code": "34", "label": "Nabavna vrednost nepremičnin", "book": "KPR", "source": ["P12", "P15"]},
+        {"code": "35", "label": "Nabavna vrednost drugih osnovnih sredstev", "book": "KPR", "source": ["P13", "P16"]}
+      ]
+    },
+    {
+      "id": "IV",
+      "title": "IV. Odbitek DDV",
+      "layout": "rate_matrix",
+      "columns": [
+        {"key": "22", "label": "22,00 %"},
+        {"key": "9_5", "label": "9,50 %"},
+        {"key": "5", "label": "5,00 %"},
+        {"key": "other", "label": "Drugo"}
+      ],
+      "rows": [
+        {
+          "label": "od nabav blaga in storitev, pridobitev blaga in prejetih storitev iz drugih držav članic EU in od uvoza po stopnji",
+          "cells": [
+            {"code": "41", "column": "22"},
+            {"code": "42", "column": "9_5"},
+            {"code": "42a", "column": "5"}
+          ]
+        },
+        {
+          "label": "od pavšalnega nadomestila po stopnji 8%",
+          "cells": [
+            {"code": "43", "column": "22"}
+          ]
+        }
+      ],
+      "sources": {
+        "41": {"book": "KPR", "source": ["P18"]},
+        "42": {"book": "KPR", "source": ["P19"]},
+        "42a": {"book": "KPR", "source": ["P20"]},
+        "43": {"book": "KPR", "source": ["P21"]}
+      }
+    },
+    {
+      "id": "V",
+      "title": "V. Obveznost / presežek",
+      "layout": "result",
+      "fields": [
+        {"code": "51", "label": "Obveznost DDV", "calc": "sum_II - sum_IV", "decimals": 2},
+        {"code": "52", "label": "Presežek DDV", "calc": "sum_IV - sum_II", "decimals": 2},
+        {"code": "03", "label": "Izračunavam odbitni delež", "type": "yes_no"},
+        {"code": "04", "label": "Zahtevam vračilo presežkov", "type": "yes_no"}
+      ]
+    }
+  ],
+  "footer": [
+    {"code": "kontakt_ime", "label": "Ime in priimek kontaktne osebe"},
+    {"code": "kontakt_tel", "label": "Telefonska številka kontaktne osebe"}
+  ],
+  "notes": [
+    "Polja I–IV na obrazcu so cele EUR; 51/52 v eDavkih prikazana z decimalnimi (npr. 3.003,00).",
+    "Kontrolni seštevek: 21+22+22a+23+23a+24+24a+24b+24c+25+25a+25b+26 − (41+42+42a+43) = 51 − 52.",
+    "Primer KLUG Q1/2026: 11=25005; 21=5501; 31=11574; 41=2488; 42=4; 42a=6; 51=3003."
+  ]
+}

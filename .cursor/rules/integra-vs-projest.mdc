@@ -1,0 +1,46 @@
+---
+description: Integra ≠ Projest — ločena pravila uvoza in Minimax knjiženja
+globs: trops_studio/integra_*.py,trops_studio/ui/vse_knjizbe_tab.py,trops_studio/ui/integra_dialog.py,trops_studio/journal_preview.py,trops_studio/minimax_journals.py,trops_studio/xml_export.py,trops_studio/account_choices.py
+alwaysApply: true
+---
+
+# Integra vs Projest
+
+**Nikoli ne mešaj pravil.** Vsako podjetje ima svoje trike (`company_source_kind`).
+
+## Integra (zst-20, Org 179531)
+
+### Skupine (AnalCtrl → Minimax)
+| AnalCtrl | Minimax | Uvoz SQL→MM |
+|----------|---------|-------------|
+| 110* | **BD** (banka) | oddaja posebej |
+| BOD* | **OP** (plače) | **NE** — že v MM |
+| DOP* | **DOP** | **NE** |
+| 100* | **DI** Paragoni (Minimax) | da |
+| 120* / DR… | **IR** Fakture (Minimax) | da |
+| 220* | PR | da |
+
+**BD ≠ BOD.** BOD niso bančni izpiski.
+
+### Paragoni (100*) → Minimax vrsta **DI**
+- Terjatev **ni 1200** (zahteva šifro stranke).
+- Iz kisanal: **1000** gotovina, **1006 → 1650** kartice.
+- Brez partnerja na debetu (ni Končni kupci 01345).
+- Listina / Opis = **AnalCtrl** (`1000068`), ne pokvarjen `anal_doku` (`0001100`).
+- **Knjiga DDV = IR** (ne DI) — sicer HTTP 409 Nepravilna knjiga DDV.
+
+### Fakture (DR… / 120*) → Minimax vrsta **IR**
+- Konto **1200** + šifra stranke, Opis `Izdani račun DR00024` — **ne** `IR:#IR868`.
+- Knjiga DDV = IR.
+
+### Davčne številke
+- V SQL/POPA pogosto samo 8 mest (npr. `65631331`) — dopolni **SI** (ali AT/…).
+- Pred sync: poišči v Minimaxu po davčni **brez** predpone; če ni → AJPES → SQL → Minimax.
+
+### Konti
+- Trops `7622` → MM `7620`; `1006` → `1650` (kartice, ne 1000).
+
+## Projest (zst-21)
+- Vasco Excel / Access knjige Darila+Fitness.
+- IR brez ID za DDV → Končni kupci **01345** + konto **1200** (terjatve) je OK.
+- Ne uporabljaj Integra Paragoni logike (1000/1650) za Projest knjige.

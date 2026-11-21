@@ -1,0 +1,18 @@
+{
+  "active_template_id": "ddvo_virman",
+  "templates": {
+    "ddvo_virman": {
+      "id": "ddvo_virman",
+      "title": "DDV + virman",
+      "from_smtp": "braco.mihelj@gmail.com",
+      "subject": "DDV za obdobje ({obdobje}) — {nagovor}",
+      "body": "<p>Spoštovani/a, <strong>{odgovorna_oseba}, ({firma})</strong>.</p>\n<p></p>\n<p><strong>DDV za obdobje ({obdobje})</strong><br>\n<span style=\"font-family:Calibri,Arial,sans-serif;font-size:11pt\"><span style=\"color:#1565C0\">Obračun DDV-O je oddan na E-davke.</span></span></p>\n<p></p>\n<p><strong><span style=\"color:#C62828\">Znesek za plačilo: {obveznost} EUR</span></strong></p>\n<p></p>\n<p><span style=\"color:#1565C0\">V prilogi sta obračun DDV-O (PDF) in plačilni nalog (virman.xml, QR koda).</span><br>\nReferenca: {referenca}<br>\nIBAN prejemnika: {iban}<br>\nDatum izvršitve: {datum}</p>\n<p></p>\n<p>{qr_block}</p>\n<p></p>\n<p>Lep pozdrav,</p>\n<p></p>\n<p><strong>Braco MIHELJ</strong><br>\ntel.: 041.653.170</p>\n<p></p>\n<p><strong>eMail:</strong><br>\nbraco.mihelj@gmail.com<br>\nbracom@windowslive.com<br>\ninfo@quickmb.com</p>\n",
+      "line_height": "1.0",
+      "para_spacing_px": 4,
+      "read_receipt": true,
+      "delivery_receipt": true,
+      "defer_send": false,
+      "builtin": true
+    }
+  }
+}

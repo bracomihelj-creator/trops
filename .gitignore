@@ -1,0 +1,19 @@
+# Trops Studio 5 — lokalni podatki in artefakti (ne v git)
+__pycache__/
+*.py[cod]
+.ruff_cache/
+.pytest_cache/
+*.bak
+data/webview2_profile/
+data/logs/
+data/*.sqlite3
+data/*.sqlite3-*
+data/session.json
+data/vat_api_cache.json
+data/vat_api_sessions.json
+data/os_webui_fill.json
+data/ai_settings.json
+data/minimax_api_settings.json
+data/MiniMax/
+data/DDVO/
+settings.local.json

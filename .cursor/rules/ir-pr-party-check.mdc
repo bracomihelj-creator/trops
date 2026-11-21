@@ -1,0 +1,20 @@
+---
+description: Preverjanje strank IR/PR — Minimax, VIES, splet
+globs: trops_studio/vat_api_check.py,trops_studio/ui/vat_api_check_dialog.py,trops_studio/ui/app.py,trops_studio/minimax_parties.py
+alwaysApply: false
+---
+
+# Preverjanje strank IR in PR
+
+Enaka logika za kupce (IR) in dobavitelje (PR). **Najprej Minimax.** Ne ustvarjaj novega zapisa, če šifra že obstaja. **AJPES ne ustvarja SI strank.**
+
+| Vrsta | Identifikacija | Potek |
+|---|---|---|
+| Slovenija | `SI` + davčna | Če obstaja v Minimaxu → poveži. Sicer Minimax API `addbytaxnumber` (javna baza, tudi TRR), brez Trops PUT. |
+| EU | DE, AT, IT, CZ, HR, FR … | **Najprej Minimax.** Če je ni: AI + SQL, nato prenos Minimax API. |
+| Tretje države | US, GB, CH, NO, RS … | **Najprej ime v Minimaxu.** Enako AI → SQL → API. Zapomni vzorec (npr. Open AI → OpenAI). |
+
+- Gola 8-mestna brez `SI` **ni** SI zavezanec (FO / v potrditev).
+- IR brez ID za DDV: naziv ostane z uvoza, Minimax = Končni kupci.
+
+Statusi: `NAJDEN V MINIMAXU`, `VIES POTRJEN`, `VIES NEVELJAVEN`, `NAJDEN NA SPLETU`, `STRANKA NI NAJDENA`, `POTREBEN PREGLED`.

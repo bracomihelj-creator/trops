@@ -1,0 +1,45 @@
+PREGLED DEJANSKE BAZE IN VHODNIH EXCELOV
+
+• Baza: D:\Trops\21\Projest.accdb
+• tblDDV_KnjigaIR_21: 163 zapisov; v vhodu 27 Darila + 136 Fitness.
+• tblDDV_KnjigaPR_21: 7098 zapisov; v vhodu 70 PR.
+• stg_Knjiga_PR: 74 vrstic. Excel KPF vsebuje tudi 3 naslovne vrstice in seštevek, zato vseh vrstic staginga ni dovoljeno šteti kot račune.
+• Aktivnih pravil v tblPR_KontoPravila: 25.
+
+REZULTAT PREDOGLEDA
+
+• Novi zapisi za uvoz: 0
+• Že enaki v bazi: 232
+• Obstajajo, vendar imajo drugačne zneske: 1
+• Neveljavni ali podvojeni v viru: 0
+• IR vhod skupaj: 28.139,76 EUR neto + 6.190,78 EUR DDV.
+• PR vhod skupaj: 39.088,72 EUR osnov + 8.220,01 EUR DDV.
+
+ODSTOPANJA EXCEL ↔ ACCESS (program jih ne prepiše)
+
+• PR 05-2026 (TELEKOM SLOVENIJE, D.D. CIGALETOVA ULICA): 8-Vred brez DDV: Excel 232,54 / baza 232,55, 14-Vred ON: Excel 0,00 / baza 0,22, 18-VST SPL#% DDV: Excel 51,16 / baza 51,12, Ne gre v knjigo: Excel 0,00 / baza -0,19
+
+PREDLOG KNJIG IN EVIDENC
+
+1. Izdane račune ohrani v eni fizični tabeli tblDDV_KnjigaIR_21 in jih ločuj s poljem Kniga. Trenutni knjigi Darila in Fitness sta pravilno zasnovani; Paragoni in Fakture naj bosta dodatni vrednosti šifranta/pogledi, ne novi kopiji iste tabele.
+2. Prejete račune ohrani v tblDDV_KnjigaPR_21. Smiselni pogledi/evidence so: domače nabave, EU blago, EU storitve, 76.a člen/samoobdavčitev, oproščene nabave in neodbitni DDV.
+3. stg_Knjiga_PR naj ostane začasna uvozna tabela. Končna evidenca mora ostati tblDDV_KnjigaPR_21, ker nanjo kažejo obstoječe kontrole, poizvedbe in kontna pravila.
+
+PREDLOG DODAJANJ V ACCESS (ni samodejno izvedeno)
+
+• tblUvozDnevnik: čas, uporabnik, pot vira, SHA-256, varnostna kopija, število novih/preskočenih/odstopajočih vrstic.
+• tblUvozNapake: batch, knjiga, interna številka/listina, polje, vrednost in opis napake.
+• tblIR_Knjige: šifra Darila/Fitness/Paragoni/Fakture, naziv in aktivnost; s tem Kniga postane nadzorovan šifrant.
+• Pred uvedbo unikatnih indeksov naj se enkrat očistijo zgodovinski dvojniki. IR trenutno nima indeksa; PR ima le neunikaten indeks Opombe. Program zato dvojnike nadzira sam in ne spreminja sheme.
+
+VARNOSTNA PRAVILA PROGRAMA
+
+• Predogled je vedno samo za branje.
+• Uvoz doda samo status NOV; V BAZI, ODSTOPANJE in NAPAKA se preskočijo.
+• Pred prvim zapisom nastane časovno označena kopija baze v mapi BCK.
+• IR in PR se zapišeta v eni Accessovi transakciji; ob napaki se vse razveljavi.
+• Po uvozu se shrani JSON dnevnik z zgoščenkami virov in baze.
+
+OPOZORILA
+
+• Ciljna IR tabela nima starega stolpca 23; program ga pravilno izpusti.

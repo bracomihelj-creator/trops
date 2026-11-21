@@ -1,0 +1,18 @@
+# Ruff za Trops Studio 5 — preverjanje napak (ne stila).
+target-version = "py310"
+line-length = 140
+extend-exclude = ["data", "docs"]
+
+[lint]
+select = ["E4", "E7", "E9", "F", "B", "UP", "PLE", "RUF100"]
+ignore = [
+  "E701", "E702", "E731",   # kompaktni stil v obstoječi kodi
+  "E722",                   # bare except — postopno (logiranje dodano na sync/db/service poteh)
+  "B008", "B904", "B905",
+  "UP006", "UP007", "UP035", "UP045",  # typing.Dict/Optional — brez masovnih sprememb
+]
+
+[lint.per-file-ignores]
+"trops_studio/ui/*.py" = ["F841", "B007"]
+"run_*.py" = ["E402"]   # sys.path nastavitev pred uvozom
+"trops_studio/vendor_kirkpr/*.py" = ["F402", "B023", "F841"]  # prevzeta koda KirKpr

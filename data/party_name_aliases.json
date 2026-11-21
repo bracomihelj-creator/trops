@@ -1,0 +1,71 @@
+{
+  "openai": {
+    "canonical": "OpenAI",
+    "aliases": [
+      "open ai",
+      "openai",
+      "open-ai",
+      "open ai llc",
+      "openai, llc",
+      "openai llc"
+    ]
+  },
+  "fiverr": {
+    "canonical": "Fiverr",
+    "aliases": [
+      "fiverr",
+      "fiverr international",
+      "fiverr ltd"
+    ]
+  },
+  "openlllc": {
+    "canonical": "OPENL LLC",
+    "aliases": [
+      "Open AI",
+      "OPENL LLC",
+      "Open AI, llc",
+      "Open AI, llc 548 Market Street PMB 97273"
+    ],
+    "minimax_code": "02825"
+  },
+  "mailerlite": {
+    "canonical": "Mailer lite",
+    "aliases": [
+      "Mailer lite P aupio 28 vilnius Lithuania",
+      "Mailer lite"
+    ],
+    "minimax_code": "02006"
+  },
+  "openaillc548marketstreetpmb97273": {
+    "canonical": "Open AI, llc 548 Market Street PMB 97273",
+    "aliases": [
+      "Open AI, llc 548 Market Street PMB 97273"
+    ],
+    "minimax_code": "02825"
+  },
+  "mailerlitepaupio28vilniuslithuania": {
+    "canonical": "Mailer lite P aupio 28 vilnius Lithuania",
+    "aliases": [
+      "Mailer lite P aupio 28 vilnius Lithuania"
+    ],
+    "minimax_code": "02006"
+  },
+  "stanislavjere": {
+    "canonical": "Stanislav Jere",
+    "aliases": [
+      "Jere Stanislav",
+      "Stanislav Jere",
+      "JERE STANISLAV",
+      "JERE STANISLAV UL.MARKA ŠLAJMERJA 18 100"
+    ],
+    "minimax_code": "00110"
+  },
+  "openlllcmm02825": {
+    "canonical": "OPENL LLC [MM:02825]",
+    "aliases": [
+      "Open AI, llc 548 Market Street PMB 97273",
+      "OPENL LLC [MM:02825]"
+    ],
+    "minimax_code": "02825"
+  }
+}
