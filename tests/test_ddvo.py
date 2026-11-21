@@ -42,3 +42,20 @@ def test_analysis_uses_obligation(motor21):
 def test_counts(motor21):
     assert motor21.list_ir()["count"] == 186
     assert motor21.list_pr()["count"] == 56
+
+
+def test_ddvo_out_dir_per_company(tmp_path, monkeypatch):
+    """5.1: DDV-O gre v TROPS_ROOT\\<Zšt>\\DDV (ne v TROPS_ROOT\\21\\<Zšt>\\DDV); brez mape podjetja → rezervna mapa."""
+    from trops_studio import ddvo_actions
+
+    (tmp_path / "21").mkdir()
+    (tmp_path / "41").mkdir()
+    (tmp_path / "01").mkdir()
+    monkeypatch.setattr(ddvo_actions, "TROPS_ROOT", tmp_path)
+    monkeypatch.setattr(ddvo_actions, "DEFAULT_MINIMAX_OUT", tmp_path / "21" / "MiniMax")
+    assert ddvo_actions._out_dir({"Zšt": "21"}) == tmp_path / "21" / "DDV"
+    assert ddvo_actions._out_dir({"Zšt": "41"}) == tmp_path / "41" / "DDV"
+    assert ddvo_actions._out_dir({"Zšt": "1"}) == tmp_path / "01" / "DDV"
+    assert not (tmp_path / "21" / "21").exists()
+    fallback = ddvo_actions._out_dir({"Zšt": "77", "Kratko ime": "Test 77"})
+    assert fallback.parent == tmp_path / "21" / "MiniMax" / "DDV-O"

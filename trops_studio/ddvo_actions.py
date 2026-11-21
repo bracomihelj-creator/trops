@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from trops_studio.companies import company_name, company_tax, company_zst
-from trops_studio.config import DEFAULT_MINIMAX_OUT, DEFAULT_TROPS
+from trops_studio.config import DEFAULT_MINIMAX_OUT, TROPS_ROOT
 from trops_studio.ddvo_calc import build_dataset, compute_ddvo
 from trops_studio.kirkpr_bridge import ensure_kirkpr_on_path
 from trops_studio.money import money_text, normalize_text
@@ -29,10 +29,18 @@ class DdvoExportResult:
     message: str = ""
 
 
+def _company_root(zst: str) -> Path | None:
+    """Mapa podjetja ``TROPS_ROOT\\<Zšt>`` (npr. D:\\Trops\\21, D:\\Trops\\41) — kot KirKpr in MRN."""
+    if not zst or not str(zst).isdigit():
+        return None
+    return Path(TROPS_ROOT) / str(int(zst)).zfill(2)
+
+
 def _out_dir(company: Mapping[str, Any] | None = None) -> Path:
-    zst = company_zst(company or {})
-    if zst and DEFAULT_TROPS.is_dir():
-        path = DEFAULT_TROPS / zst / "DDV"
+    """Izhodna mapa DDV-O: ``TROPS_ROOT\\<Zšt>\\DDV`` (5.1: prej napačno ``TROPS_ROOT\\21\\<Zšt>\\DDV``)."""
+    root = _company_root(company_zst(company or {}))
+    if root is not None and root.is_dir():
+        path = root / "DDV"
         path.mkdir(parents=True, exist_ok=True)
         return path
     label = company_name(company or {}) or "PROJEST"
