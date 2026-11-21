@@ -17,3 +17,8 @@ data/minimax_api_settings.json
 data/MiniMax/
 data/DDVO/
 settings.local.json
+
+data/backups/
+data/MiniMax/
+data/*.json
+
