@@ -63,9 +63,15 @@ class AccountsPartiesMixin:
                     "suggested": sug,
                     "suggested_label": labels.get(account_code_from_choice(sug), sug),
                 })
+            # 5.1: prikaži tudi skupne preslikave (prazen Org_ID) — veljajo za vsa podjetja (db.get_account_code_map_dict).
             saved = [
-                {**m, "minimax_label": labels.get(str(m.get("minimax_code") or ""), m.get("minimax_code"))}
-                for m in self.db.list_account_code_maps(org)
+                {
+                    **m,
+                    "minimax_label": labels.get(str(m.get("minimax_code") or ""), m.get("minimax_code")),
+                    "shared": not str(m.get("org_id") or "").strip(),
+                }
+                for m in self.db.list_account_code_maps(None)
+                if not str(m.get("org_id") or "").strip() or str(m.get("org_id")).strip() == str(org or "").strip()
             ]
             return {
                 "ok": True,

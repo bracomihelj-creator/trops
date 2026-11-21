@@ -900,7 +900,7 @@
         "<label class='chk strong'><input type='checkbox' id='mApplyData' checked> Prepiši tudi obstoječe vrstice (IR, PR, knjižbe, kisanal)</label>"
         : "<div class='empty small'>" + icon("check") + "<div><b>Vsi konti so skladni z Minimaxom.</b><br>Ni kontov, ki bi potrebovali preslikavo.</div></div>";
       var saved = (d.saved || []).length ? "<details class='savedMaps'><summary>Shranjene preslikave (" + d.saved.length + ")</summary><div class='tableWrap short'><table class='grid'><thead><tr><th>Trops</th><th>Minimax</th><th>Vir</th><th>Posodobljeno</th></tr></thead><tbody>" +
-        d.saved.map(function (m) { return "<tr><td class='code'>" + esc(m.trops_code) + "</td><td>" + esc(m.minimax_label || m.minimax_code) + "</td><td>" + esc(m.source) + "</td><td>" + esc(siDate(m.updated_at)) + "</td></tr>"; }).join("") +
+        d.saved.map(function (m) { return "<tr><td class='code'>" + esc(m.trops_code) + "</td><td>" + esc(m.minimax_label || m.minimax_code) + "</td><td>" + esc(m.source) + (m.shared ? " · skupno (vsa podjetja)" : "") + "</td><td>" + esc(siDate(m.updated_at)) + "</td></tr>"; }).join("") +
         "</tbody></table></div></details>" : "";
       var buttons = [{ label: "Zapri" }];
       if (rows.length) buttons.push({ label: "Shrani preslikave", kind: "primary", icon: "check", onClick: function (btn) {

@@ -122,3 +122,16 @@ def test_edit_existing_party_needs_no_confirm(empty_motor):
     first = m.party_save({"name": "Ena d.o.o.", "tax_number": "11223344", "country": "SI"})
     res = m.party_save({"id": first["id"], "name": "Ena d.o.o.", "tax_number": "11223344", "country": "SI", "notes": "x"})
     assert res["ok"] is True and m.db.get_party(first["id"])["notes"] == "x"
+
+
+def test_account_map_info_shows_shared_maps(empty_motor):
+    """5.1 (2A): okno Konti Trops → Minimax prikaže tudi skupne preslikave (prazen Org_ID), tuje org pa ne."""
+    m = empty_motor
+    m.db.upsert_account_code_maps({"7622": "7620"}, org_id="", source="default")
+    m.db.upsert_account_code_maps({"4061": "4060"}, org_id="999999", source="default")
+    m.active_company = {"Zšt": "99", "Kratko ime": "Test 99", "Org_ID": "123456"}
+    m.db.upsert_account_code_maps({"4191": "4190"}, org_id="123456", source="user")
+    info = m.account_map_info()
+    got = {(x["trops_code"], bool(x["shared"])) for x in info["saved"]}
+    assert ("7622", True) in got and ("4191", False) in got
+    assert all(x["trops_code"] != "4061" for x in info["saved"])
