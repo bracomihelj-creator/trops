@@ -24,7 +24,8 @@ if str(ROOT) not in sys.path:
 UI = ROOT / "ui"
 HOST = "127.0.0.1"
 
-from motor import APP_TITLE, APP_VERSION, BadRequest, Motor  # noqa: E402
+from motor import APP_TITLE, APP_VERSION, BadRequest, Motor, parse_id  # noqa: E402
+from trops_studio_web.accounts_parties import InputError  # noqa: E402
 from trops_studio.config import WEBVIEW_PROFILE_DIR  # noqa: E402
 from trops_studio.log_setup import setup_logging  # noqa: E402
 from trops_studio_web.jobs import JobManager  # noqa: E402
@@ -160,7 +161,7 @@ class Handler(BaseHTTPRequestHandler):
         self._json_resp(code, {"ok": False, "error": message, "msg": message})
 
     def _exception(self, exc: Exception) -> None:
-        if isinstance(exc, BadRequest):
+        if isinstance(exc, (BadRequest, InputError)):
             self._error(400, str(exc))
         elif isinstance(exc, NotFound):
             self._error(404, str(exc))
@@ -263,6 +264,16 @@ class Handler(BaseHTTPRequestHandler):
                     job["result"] = normalize_result(job["result"])
                 self._json_resp(200, job)
                 return
+            if path == "/api/party":
+                res = m.party_get(parse_id((q.get("id") or [""])[0]))
+                if res.get("ok") is False:
+                    self._error(404, str(res.get("error")))
+                    return
+                self._json_resp(200, res)
+                return
+            if path == "/api/account_map":
+                self._json_resp(200, m.account_map_info())
+                return
             if path == "/api/row":
                 kind = (q.get("kind") or ["IR"])[0]
                 rid = (q.get("id") or [""])[0]
@@ -340,6 +351,9 @@ LONG_ACTIONS = {
     "ddvo_virman": "DDV-O PDF + virman",
     "ddvo_email_draft": "Osnutek e-pošte DDV-O",
     "ddvo_email_send": "Pošiljanje e-pošte DDV-O",
+    "minimax_accounts_sync": "Kontni plan iz Minimax",
+    "party_ajpes": "AJPES poizvedba",
+    "party_vies": "VIES preverba",
 }
 
 
@@ -383,6 +397,11 @@ def _actions(m: Motor) -> Dict[str, Callable[[Dict[str, Any]], Any]]:
         "ddvo_virman": lambda b: m.ddvo_virman(),
         "ddvo_email_draft": lambda b: m.ddvo_email_draft(),
         "ddvo_email_send": lambda b: m.ddvo_email_send(b),
+        "account_map_save": lambda b: m.account_map_save(b.get("maps"), bool(b.get("apply_data")), b.get("confirm") is True),
+        "minimax_accounts_sync": lambda b: m.minimax_accounts_sync(),
+        "party_save": lambda b: m.party_save(b.get("party") if isinstance(b.get("party"), dict) else None),
+        "party_ajpes": lambda b: m.party_ajpes(b.get("party") if isinstance(b.get("party"), dict) else {}),
+        "party_vies": lambda b: m.party_vies(b.get("party") if isinstance(b.get("party"), dict) else {}),
     }
 
 

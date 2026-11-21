@@ -16,6 +16,7 @@ if str(ROOT) not in sys.path:
 from trops_studio import APP_TITLE, __version__ as APP_VERSION  # noqa: E402
 from trops_studio.money import parse_date  # noqa: E402
 from trops_studio.sync_state import SYNC_ERROR, SYNC_READY, SYNC_SYNCED  # noqa: E402
+from trops_studio_web.accounts_parties import AccountsPartiesMixin, InputError  # noqa: E402
 from trops_studio_web.service import AppService, _safe  # noqa: E402
 
 __all__ = ["APP_TITLE", "APP_VERSION", "AppService", "BadRequest", "Motor"]
@@ -45,7 +46,7 @@ def _same_value(a: Any, b: Any) -> bool:
     return len(sb) == 10 and sa[:10] == sb
 
 
-class BadRequest(ValueError):
+class BadRequest(InputError):
     """Neveljaven vhod iz UI → HTTP 400 z JSON {ok:false,error}."""
 
 
@@ -67,7 +68,7 @@ def parse_ids(values: Any) -> list[int]:
     return [parse_id(v) for v in values]
 
 
-class Motor(AppService):
+class Motor(AccountsPartiesMixin, AppService):
     """Javni motor za host.py."""
 
     @property
@@ -80,6 +81,10 @@ class Motor(AppService):
         if not isinstance(data, dict):
             return {"ok": False, "error": "Bootstrap ni uspel."}
         data.setdefault("ok", True)
+        from trops_studio.config import SETTINGS_ERRORS
+
+        if SETTINGS_ERRORS:
+            data["warnings"] = list(data.get("warnings") or []) + list(SETTINGS_ERRORS)
         data["version"] = APP_VERSION
         data["title"] = APP_TITLE
         return data
