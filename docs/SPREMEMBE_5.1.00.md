@@ -38,7 +38,7 @@ Vsak korak je svoj git commit; zgodovina se ne prepisuje.
 - **Konti Trops → Minimax**: okno pokaže tudi skupne preslikave (brez Org_ID, »skupno (vsa podjetja)«); privzete preslikave se ne zapišejo več v bazo, ko Org_ID podjetja ni znan.
 
 ## Čiščenje baz 2C (21.11.2026 18:04, odobreno; ni v gitu)
-Varnostna kopija pred spremembo (zst-21, zst-20 z -wal/-shm, MD5 preverjen): `data\backups\`.
+Varnostna kopija pred spremembo (zst-21, zst-20 z -wal/-shm, MD5 preverjen): `data\backups\zst-21_zst-20_pred_ciscenjem_preslikav_2C_20261121_180357.zip`.
 Povrnitev: zapri Trops, razpakiraj zip v `data\` čez obstoječe datoteke.
 
 - **zst-21**: `DELETE FROM minimax_accounts WHERE org_id='179531'` — 1120 vrstic (kontni plan Integre, prenesen 26.7.; zst-21 = PROJEST, Org_ID 179535). Ostane 1120 vrstic 179535.
