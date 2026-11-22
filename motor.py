@@ -417,12 +417,36 @@ class Motor(AccountsPartiesMixin, AppService):
         info["year"] = self.filter_from_date.year
         return info
 
-    def integra_restore(self, candidate: str = "") -> dict[str, Any]:
+    def integra_restore_preview(self, candidate: str = "") -> dict[str, Any]:
         info = super().integra_info()
         allowed = {str(Path(p)) for p in (info.get("candidates") or []) + (info.get("baks") or [])}
         if not candidate or str(Path(candidate)) not in allowed:
             raise BadRequest("Izberi eno od najdenih ZIP/BAK kopij v SQL mapi.")
-        res = super().integra_restore(candidate)
+        res = super().integra_restore_preview(candidate)
+        if res.get("ok"):
+            server = res.get("server") or ""
+            db = res.get("database") or "TROPS"
+            n = int(res.get("session_count") or 0)
+            res["msg"] = f"Pripravljeno: {Path(candidate).name} na {server} / {db}. Povezanih sej: {n}."
+            if res.get("safety_backup"):
+                res["msg"] += f" Varnostna kopija: {res['safety_backup']}"
+        return res
+
+    def integra_restore(
+        self,
+        candidate: str = "",
+        disconnect_sessions: bool = False,
+        safety_backup: str = "",
+    ) -> dict[str, Any]:
+        info = super().integra_info()
+        allowed = {str(Path(p)) for p in (info.get("candidates") or []) + (info.get("baks") or [])}
+        if not candidate or str(Path(candidate)) not in allowed:
+            raise BadRequest("Izberi eno od najdenih ZIP/BAK kopij v SQL mapi.")
+        res = super().integra_restore(
+            candidate,
+            disconnect_sessions=bool(disconnect_sessions),
+            safety_backup=str(safety_backup or ""),
+        )
         if res.get("ok"):
             server = res.get("server") or ""
             db = res.get("database") or "TROPS"
@@ -430,6 +454,8 @@ class Motor(AccountsPartiesMixin, AppService):
             res["msg"] = f"RESTORE uspešen: {Path(candidate).name} na {server} / {db}"
             if src:
                 res["msg"] += f" ({src})"
+            if res.get("safety_backup"):
+                res["msg"] += f". Varnostna kopija: {res['safety_backup']}"
         return res
 
     def integra_kisanal(self, year: Any = "") -> dict[str, Any]:

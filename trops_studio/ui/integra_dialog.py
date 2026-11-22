@@ -18,11 +18,12 @@ from trops_studio.integra_irpr import import_kisanal_to_ir_pr
 from trops_studio.integra_sql import (
     IntegraSqlError,
     TropsSqlTarget,
+    begin_restore_preview,
     candidate_display,
     discover_trops_targets,
     find_detached_trops_targets,
     format_file_stamp,
-    inspect_bak_for_restore,
+    format_trops_sessions,
     list_sql_bak_files,
     list_sql_bck_candidates,
     list_sql_bck_zips,
@@ -448,8 +449,13 @@ class IntegraDialog(tk.Toplevel):
             prepared = prepare_sql_bck(root, source, trops=trops, overwrite=True)
             if prepared.bak_path is None:
                 raise IntegraSqlError("Po pripravi ni .bak datoteke za obnovitev.")
-            staged, backup_set, set_count = inspect_bak_for_restore(prepared.bak_path, trops)
-            attached_now = trops_is_attached(trops)
+            self.status_var.set("Preverjam seje in delam varnostno kopijo…")
+            self.update_idletasks()
+            preview = begin_restore_preview(prepared.bak_path, trops)
+            staged = preview.staged
+            backup_set = preview.backup_set
+            set_count = preview.backup_set_count
+            attached_now = preview.attached
         except IntegraSqlError as exc:
             self.status_var.set("Napaka — priprava BAK ni uspela.")
             self._append_log(f"NAPAKA: {exc}")
@@ -458,27 +464,56 @@ class IntegraDialog(tk.Toplevel):
 
         kind = source.suffix.lower().lstrip(".")
         data_dir = trops.data_dir or Path("?")
+        bak_path = prepared.bak_path
+        safety_txt = (
+            f"Varnostna kopija trenutne TROPS je v:\n{preview.safety_backup}\n\n"
+            if preview.safety_backup
+            else "Varnostna kopija trenutne TROPS ni nastala (baza še ne obstaja).\n\n"
+        )
+        sess_txt = format_trops_sessions(preview.sessions)
         if not messagebox.askyesno(
             "Obnovi TROPS iz ZIP/BAK",
-            "Izvedem obnovitev (operacija B)?\n\n"
+            "Izvedem obnovitev?\n\n"
+            f"Strežnik:\n{trops.server} / {trops.database}\n\n"
             f"Vir ({kind.upper()}):\n{source.name}\n"
-            f"BAK:\n{prepared.bak_path.name if prepared.bak_path else '—'}\n"
+            f"Pot kopije:\n{bak_path}\n"
             f"Kopija v BAK (zadnja polna):\n{backup_set.position}/{set_count}  {backup_set.label}\n\n"
             f"SQL DATA (cilj):\n{data_dir}\n"
             f"{Path(trops.data_file).name if trops.data_file else ''}\n"
             f"{Path(trops.log_file).name if trops.log_file else ''}\n\n"
-            f"Strežnik:\n{trops.server} / {trops.database}\n\n"
-            "Pred obnovitvijo bo ustvarjena varnostna kopija trenutne TROPS.\n"
-            "Obstoječa baza TROPS bo zamenjana (REPLACE).",
+            + safety_txt
+            + sess_txt
+            + "\n\nObstoječa baza TROPS bo zamenjana (REPLACE).",
             parent=self,
         ):
             self.status_var.set("Obnova preklicana.")
             return
 
+        disconnect = False
+        if preview.sessions:
+            if not messagebox.askyesno(
+                "Povezane seje",
+                "TROPS ima povezane seje. Povezave prekinem samo, če to izrecno potrdiš.\n\n"
+                + sess_txt
+                + "\n\nPrekinem povezave in obnovim?\n"
+                "Če izbereš Ne, obnova se ne začne.",
+                parent=self,
+            ):
+                self.status_var.set("Obnova preklicana — povezave niso prekinjene.")
+                return
+            disconnect = True
+
         self.status_var.set("Obnavljam TROPS iz BAK…")
         self.update_idletasks()
         try:
-            restored = restore_bak_to_trops(prepared.bak_path, trops, backup_set=backup_set)
+            restored = restore_bak_to_trops(
+                prepared.bak_path,
+                trops,
+                backup_set=backup_set,
+                disconnect_sessions=disconnect,
+                existing_safety=preview.safety_backup,
+                safety_backup=preview.safety_backup is None,
+            )
         except IntegraSqlError as exc:
             self.status_var.set("Napaka — obnovitev ni uspela.")
             self._append_log(f"NAPAKA: {exc}")

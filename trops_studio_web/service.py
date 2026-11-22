@@ -1168,7 +1168,74 @@ class AppService:
             self._persist_session()
             return self.integra_info()
 
-    def integra_restore(self, candidate: str = "") -> dict[str, Any]:
+    def integra_restore_preview(self, candidate: str = "") -> dict[str, Any]:
+        """Priprava obnove: seje, varnostna kopija, glava BAK. Brez RESTORE."""
+        with self._lock:
+            from trops_studio.integra_sql import (
+                IntegraSqlError,
+                begin_restore_preview,
+                discover_trops_targets,
+                find_detached_trops_targets,
+                preferred_trops_target,
+                prepare_sql_bck,
+                resolve_integra_sql_dir,
+                resolve_integra_sql_server,
+            )
+
+            sql_dir = resolve_integra_sql_dir(self.integra_sql_dir)
+            try:
+                server, server_source = resolve_integra_sql_server()
+                targets = discover_trops_targets()
+                if not targets:
+                    targets = find_detached_trops_targets(database="TROPS")
+                if not targets:
+                    return {
+                        "ok": False,
+                        "error": f"TROPS v SQL ni najden na {server} ({server_source}).",
+                    }
+                trops = preferred_trops_target(targets)
+            except IntegraSqlError as exc:
+                return {"ok": False, "error": str(exc)}
+
+            if not candidate:
+                raise ValueError("Najprej izberi ZIP/BAK datoteko.")
+            src = Path(candidate)
+            if not src.is_file() or src.suffix.lower() not in {".zip", ".bak"}:
+                raise ValueError("Izbrana ZIP/BAK datoteka ne obstaja.")
+            try:
+                prepared = prepare_sql_bck(sql_dir, src, trops=trops, overwrite=True)
+                if prepared.bak_path is None:
+                    raise IntegraSqlError("Po pripravi ni .bak datoteke za RESTORE.")
+                preview = begin_restore_preview(prepared.bak_path, trops)
+            except Exception as exc:
+                return {"ok": False, "error": str(exc)}
+            safety = preview.safety_backup
+            return _safe(
+                {
+                    "ok": True,
+                    "server": trops.server,
+                    "database": trops.database,
+                    "sql_server_source": server_source,
+                    "bak": str(prepared.bak_path),
+                    "bak_name": prepared.bak_path.name if prepared.bak_path else "",
+                    "backup_set": preview.backup_set.label,
+                    "backup_set_position": preview.backup_set.position,
+                    "backup_set_count": preview.backup_set_count,
+                    "safety_backup": str(safety) if safety else "",
+                    "sessions": [s.as_dict() for s in preview.sessions],
+                    "session_count": len(preview.sessions),
+                    "data_file": trops.data_file,
+                    "log_file": trops.log_file,
+                    "attached": preview.attached,
+                }
+            )
+
+    def integra_restore(
+        self,
+        candidate: str = "",
+        disconnect_sessions: bool = False,
+        safety_backup: str = "",
+    ) -> dict[str, Any]:
         """Obnovi TROPS iz ZIP/BAK — kliče obstoječo integra_sql logiko."""
         with self._lock:
             from trops_studio.integra_sql import (
@@ -1201,8 +1268,18 @@ class AppService:
             src = Path(candidate)
             if not src.is_file() or src.suffix.lower() not in {".zip", ".bak"}:
                 raise ValueError("Izbrana ZIP/BAK datoteka ne obstaja.")
+            existing = Path(safety_backup) if safety_backup else None
+            if existing is not None and not existing.is_file():
+                existing = None
             try:
-                prepared, restored = razpakiraj_in_restore(sql_dir, src, trops)
+                prepared, restored = razpakiraj_in_restore(
+                    sql_dir,
+                    src,
+                    trops,
+                    disconnect_sessions=bool(disconnect_sessions),
+                    existing_safety=existing,
+                    safety_backup=existing is None,
+                )
             except Exception as exc:
                 return {"ok": False, "error": str(exc)}
             return _safe(
@@ -1213,6 +1290,8 @@ class AppService:
                     "server": trops.server,
                     "database": trops.database,
                     "sql_server_source": server_source,
+                    "safety_backup": str(restored.safety_backup or ""),
+                    "sessions_disconnected": bool(disconnect_sessions),
                 }
             )
 

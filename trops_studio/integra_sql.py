@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import os
+from contextlib import contextmanager
 import shutil
 import subprocess
 import zipfile
@@ -649,6 +651,186 @@ def filelist_from_bak(
     return data_name, log_name
 
 
+
+@dataclass
+class TropsSession:
+    """Povezana seja na bazi TROPS (sys.dm_exec_sessions)."""
+
+    session_id: int
+    login: str = ""
+    host: str = ""
+    program: str = ""
+    login_time: str = ""
+
+    def as_dict(self) -> dict:
+        return {
+            "session_id": self.session_id,
+            "login": self.login,
+            "host": self.host,
+            "program": self.program,
+            "login_time": self.login_time,
+        }
+
+
+@dataclass
+class RestorePreview:
+    """Podatki pred RESTORE: seje, varnostna kopija, glava BAK — brez REPLACE."""
+
+    staged: Path
+    trops: TropsSqlTarget
+    backup_set: BakBackupSet
+    backup_set_count: int
+    safety_backup: Path | None
+    sessions: list[TropsSession]
+    attached: bool
+
+
+RESTORE_LOCK_NAME = "integra_restore.lock"
+RESTORE_LOCK_STALE_SEC = 30 * 60
+
+
+def restore_lock_path() -> Path:
+    from trops_studio.config import DATA_DIR
+
+    return Path(DATA_DIR) / RESTORE_LOCK_NAME
+
+
+def _lock_is_stale(path: Path) -> bool:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        started = datetime.fromisoformat(str(data.get("started") or ""))
+        return (datetime.now() - started).total_seconds() >= RESTORE_LOCK_STALE_SEC
+    except Exception:
+        return True
+
+
+def _format_lock_message(path: Path) -> str:
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        started = data.get("started") or "?"
+        holder = data.get("holder") or "obnova"
+        return (
+            f"Obnova TROPS že teče (od {started}, {holder}). "
+            "Počakaj na zaključek ali, če je obnova zastala, poskusi znova čez 30 minut."
+        )
+    except Exception:
+        return "Obnova TROPS že teče. Počakaj na zaključek."
+
+
+def assert_restore_not_locked() -> None:
+    path = restore_lock_path()
+    if path.is_file() and not _lock_is_stale(path):
+        raise IntegraSqlError(_format_lock_message(path))
+
+
+@contextmanager
+def restore_lock(holder: str = "restore"):
+    """Datotečni zaklep, da ne tečeta dve obnovi hkrati (namizje + splet)."""
+    path = restore_lock_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.is_file():
+        if _lock_is_stale(path):
+            try:
+                path.unlink()
+            except OSError:
+                pass
+        else:
+            raise IntegraSqlError(_format_lock_message(path))
+    payload = json.dumps(
+        {
+            "holder": holder,
+            "started": datetime.now().isoformat(timespec="seconds"),
+            "pid": os.getpid(),
+        },
+        ensure_ascii=False,
+    )
+    try:
+        fd = os.open(str(path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError as exc:
+        raise IntegraSqlError(_format_lock_message(path)) from exc
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(payload)
+        yield path
+    finally:
+        try:
+            path.unlink()
+        except OSError:
+            pass
+
+
+def list_trops_sessions(trops: TropsSqlTarget) -> list[TropsSession]:
+    """Seznam sej, ki trenutno uporabljajo bazo TROPS (brez lastnega sqlcmd)."""
+    if not trops_is_attached(trops):
+        return []
+    db = _sql_literal(trops.database)
+    q = (
+        "SET NOCOUNT ON; "
+        "SELECT s.session_id, ISNULL(s.login_name,N''), ISNULL(s.host_name,N''), "
+        "ISNULL(s.program_name,N''), CONVERT(varchar(19), s.login_time, 120) "
+        "FROM sys.dm_exec_sessions s "
+        f"WHERE s.database_id = DB_ID(N'{db}') "
+        "AND s.session_id <> @@SPID;"
+    )
+    out = _sqlcmd_query(trops.server, q, timeout=30, fail_on_error=True)
+    sessions: list[TropsSession] = []
+    for line in out.splitlines():
+        parts = [p.strip() for p in line.strip().split("|")]
+        if len(parts) < 5 or not parts[0].isdigit():
+            continue
+        sessions.append(
+            TropsSession(
+                session_id=int(parts[0]),
+                login=parts[1],
+                host=parts[2],
+                program=parts[3],
+                login_time=parts[4],
+            )
+        )
+    return sessions
+
+
+def format_trops_sessions(sessions: list[TropsSession]) -> str:
+    if not sessions:
+        return "Ni povezanih sej."
+    lines = [f"Povezanih sej: {len(sessions)}"]
+    for s in sessions:
+        bit = f"  SPID {s.session_id}: {s.login} @ {s.host}"
+        if s.program:
+            bit += f" ({s.program})"
+        if s.login_time:
+            bit += f", od {s.login_time}"
+        lines.append(bit)
+    return "\n".join(lines)
+
+
+def begin_restore_preview(
+    bak_path: Path,
+    trops: TropsSqlTarget,
+    *,
+    make_safety: bool = True,
+) -> RestorePreview:
+    """
+    Priprava pred potrditvijo: BAK v SQL Backup, glava, varnostna kopija COPY_ONLY,
+    seznam sej. Ne izvede RESTORE in ne prekine povezav.
+    """
+    assert_restore_not_locked()
+    staged = stage_bak_for_sql(Path(bak_path).resolve(), trops)
+    sets = read_bak_header(trops.server, staged)
+    chosen = latest_full_backup_set(sets)
+    attached = trops_is_attached(trops)
+    safety = backup_current_trops(trops, attached=attached) if make_safety else None
+    sessions = list_trops_sessions(trops)
+    return RestorePreview(
+        staged=staged,
+        trops=trops,
+        backup_set=chosen,
+        backup_set_count=len(sets),
+        safety_backup=safety,
+        sessions=sessions,
+        attached=attached,
+    )
+
 def restore_bak_to_trops(
     bak_path: Path,
     trops: TropsSqlTarget,
@@ -656,31 +838,53 @@ def restore_bak_to_trops(
     keep_staging: bool = True,
     backup_set: BakBackupSet | None = None,
     safety_backup: bool = True,
+    disconnect_sessions: bool = False,
+    existing_safety: Path | None = None,
+    use_lock: bool = True,
 ) -> RestoreTropsResult:
     """
     Obnovi zadnjo polno kopijo iz BAK v SQL bazo TROPS (REPLACE) na poti
     instance DATA (npr. …\\MSSQL17.SQLEXPRESS\\MSSQL\\DATA\\TROPS_Data.MDF).
     Deluje tudi, ko TROPS ni priklopljen. Pred tem varnostna kopija obstoječe.
+    Povezave prekine samo, če je disconnect_sessions=True. Dve obnovi hkrati
+    prepreči datotečni zaklep.
     """
-    if not trops.data_file or not trops.log_file:
-        raise IntegraSqlError(
-            "TROPS cilj nima DATA/LOG poti — preveri bazo v SQL Serverju."
-        )
-    bak_path = Path(bak_path).resolve()
-    staged = stage_bak_for_sql(bak_path, trops)
-    sets = read_bak_header(trops.server, staged)
-    chosen = backup_set or latest_full_backup_set(sets)
-    logical_data, logical_log = filelist_from_bak(trops.server, staged, chosen.position)
 
-    attached = trops_is_attached(trops)
-    safety = backup_current_trops(trops, attached=attached) if safety_backup else None
+    def _run() -> RestoreTropsResult:
+        if not trops.data_file or not trops.log_file:
+            raise IntegraSqlError(
+                "TROPS cilj nima DATA/LOG poti — preveri bazo v SQL Serverju."
+            )
+        bak = Path(bak_path).resolve()
+        staged = stage_bak_for_sql(bak, trops)
+        sets = read_bak_header(trops.server, staged)
+        chosen = backup_set or latest_full_backup_set(sets)
+        logical_data, logical_log = filelist_from_bak(trops.server, staged, chosen.position)
 
-    db = trops.database
-    # RESTORE zahteva ekskluzivni dostop (le če je baza priklopljena)
-    single_user = (
-        f"ALTER DATABASE [{db}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;" if attached else ""
-    )
-    q = f"""
+        attached = trops_is_attached(trops)
+        sessions = list_trops_sessions(trops)
+        if sessions and not disconnect_sessions:
+            raise IntegraSqlError(
+                "TROPS ima aktivne seje. Obnova je prekinjena, povezave niso prekinjene.\n"
+                "Označi 'Prekini povezave' in ponovi, ali počakaj, da se seje končajo.\n\n"
+                + format_trops_sessions(sessions)
+            )
+
+        safety = existing_safety
+        if safety is None and safety_backup:
+            safety = backup_current_trops(trops, attached=attached)
+
+        db = trops.database
+        if attached:
+            if disconnect_sessions:
+                single_user = (
+                    f"ALTER DATABASE [{db}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;"
+                )
+            else:
+                single_user = f"ALTER DATABASE [{db}] SET SINGLE_USER;"
+        else:
+            single_user = ""
+        q = f"""
 SET NOCOUNT ON;
 {single_user}
 RESTORE DATABASE [{db}]
@@ -692,57 +896,61 @@ MOVE N'{_sql_literal(logical_log)}' TO N'{_sql_literal(trops.log_file)}',
 STATS = 10;
 ALTER DATABASE [{db}] SET MULTI_USER;
 """
-    try:
-        out = _sqlcmd_query(trops.server, q, timeout=600, fail_on_error=True)
-    except IntegraSqlError:
-        # poskusi vrniti MULTI_USER tudi ob napaki
         try:
-            _sqlcmd_query(
-                trops.server,
-                f"IF DB_ID(N'{_sql_literal(db)}') IS NOT NULL "
-                f"ALTER DATABASE [{db}] SET MULTI_USER;",
-                timeout=60,
-            )
+            out = _sqlcmd_query(trops.server, q, timeout=600, fail_on_error=True)
         except IntegraSqlError:
-            pass
-        raise
+            try:
+                _sqlcmd_query(
+                    trops.server,
+                    f"IF DB_ID(N'{_sql_literal(db)}') IS NOT NULL "
+                    f"ALTER DATABASE [{db}] SET MULTI_USER;",
+                    timeout=60,
+                )
+            except IntegraSqlError:
+                pass
+            raise
 
-    if not trops_is_attached(trops):
-        raise IntegraSqlError(f"Po RESTORE baze {db} ni v SQL ({trops.server}).")
+        if not trops_is_attached(trops):
+            raise IntegraSqlError(f"Po RESTORE baze {db} ni v SQL ({trops.server}).")
 
-    if not keep_staging and staged.resolve() != bak_path.resolve():
-        try:
-            staged.unlink(missing_ok=True)  # type: ignore[call-arg]
-        except TypeError:
-            if staged.exists():
-                staged.unlink()
-        except OSError:
-            pass
+        if not keep_staging and staged.resolve() != bak.resolve():
+            try:
+                staged.unlink(missing_ok=True)  # type: ignore[call-arg]
+            except TypeError:
+                if staged.exists():
+                    staged.unlink()
+            except OSError:
+                pass
 
-    msg = (
-        f"RESTORE uspešen.\n"
-        f"BAK: {bak_path.name}\n"
-        f"Kopija {chosen.position}/{len(sets)}: {chosen.label}\n"
-        f"SQL: {trops.server} / {trops.database}\n"
-        f"DATA: {trops.data_file}\n"
-        f"LOG: {trops.log_file}\n"
-        f"Varnostna kopija prej: {safety or '— (TROPS ni obstajal)'}"
-    )
-    if out.strip():
-        msg += f"\n\n{out.strip()[-400:]}"
-    return RestoreTropsResult(
-        bak_path=bak_path,
-        staging_bak=staged,
-        trops=trops,
-        logical_data=logical_data,
-        logical_log=logical_log,
-        data_file=trops.data_file,
-        log_file=trops.log_file,
-        message=msg,
-        backup_set=chosen,
-        backup_set_count=len(sets),
-        safety_backup=safety,
-    )
+        msg = (
+            f"RESTORE uspešen.\n"
+            f"BAK: {bak.name}\n"
+            f"Kopija {chosen.position}/{len(sets)}: {chosen.label}\n"
+            f"SQL: {trops.server} / {trops.database}\n"
+            f"DATA: {trops.data_file}\n"
+            f"LOG: {trops.log_file}\n"
+            f"Varnostna kopija prej: {safety or '— (TROPS ni obstajal)'}"
+        )
+        if out.strip():
+            msg += f"\n\n{out.strip()[-400:]}"
+        return RestoreTropsResult(
+            bak_path=bak,
+            staging_bak=staged,
+            trops=trops,
+            logical_data=logical_data,
+            logical_log=logical_log,
+            data_file=trops.data_file,
+            log_file=trops.log_file,
+            message=msg,
+            backup_set=chosen,
+            backup_set_count=len(sets),
+            safety_backup=safety,
+        )
+
+    if use_lock:
+        with restore_lock():
+            return _run()
+    return _run()
 
 
 def inspect_bak_for_restore(
@@ -762,11 +970,20 @@ def razpakiraj_in_restore(
     *,
     overwrite: bool = True,
     backup_set: BakBackupSet | None = None,
+    disconnect_sessions: bool = False,
+    existing_safety: Path | None = None,
+    safety_backup: bool = True,
 ) -> tuple[UnpackSqlBckResult, RestoreTropsResult]:
     """ZIP/BAK priprava + varnostna kopija + RESTORE zadnje kopije v TROPS."""
     prepared = prepare_sql_bck(sql_dir, source_path, trops=trops, overwrite=overwrite)
     if prepared.bak_path is None:
         raise IntegraSqlError("Po pripravi ni .bak datoteke za RESTORE.")
-    restored = restore_bak_to_trops(prepared.bak_path, trops, backup_set=backup_set)
+    restored = restore_bak_to_trops(
+        prepared.bak_path,
+        trops,
+        backup_set=backup_set,
+        disconnect_sessions=disconnect_sessions,
+        existing_safety=existing_safety,
+        safety_backup=safety_backup if existing_safety is None else False,
+    )
     return prepared, restored
-

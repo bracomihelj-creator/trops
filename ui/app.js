@@ -858,16 +858,55 @@
           if (!info.sql_server) { toast(info.sql_server_error || "SQL strežnik ni določen. Preveri DSN Trops.", "error"); return false; }
           var srvLabel = esc(info.sql_server) + (info.sql_server_source ? " (" + esc(info.sql_server_source) + ")" : "");
           closeModal();
-          confirmDialog({ title: "Obnova baze TROPS", danger: true, ok: "Nadaljuj", icon: "alert",
-            html: "<p>RESTORE prepiše SQL bazo <b>TROPS</b> na strežniku <b>" + srvLabel + "</b> z vsebino:</p><p><code>" + esc(cand) + "</code></p><p class='muted'>Trenutni podatki v TROPS bodo zamenjani.</p>" })
-            .then(function (yes) {
+          runJob("integra_restore_preview", { candidate: cand }, "Priprava obnove TROPS").then(function (p) {
+            if (!p || p.ok === false) { toast(errText(p), "error"); return; }
+            var srv = esc(p.server || info.sql_server) + (p.sql_server_source ? " (" + esc(p.sql_server_source) + ")" : "");
+            var sess = p.sessions || [];
+            var sessHtml;
+            if (sess.length) {
+              sessHtml = "<p><b>Povezane seje (" + sess.length + "):</b></p><ul>" +
+                sess.map(function (s) {
+                  return "<li>SPID " + esc(s.session_id) + ": " + esc(s.login || "") + " @ " + esc(s.host || "") +
+                    (s.program ? " (" + esc(s.program) + ")" : "") +
+                    (s.login_time ? ", od " + esc(s.login_time) : "") + "</li>";
+                }).join("") + "</ul>" +
+                "<label><input type='checkbox' id='mKillSess'> Prekini povezave in obnovi</label>" +
+                "<p class='muted'>Brez te oznake obnova ne bo stekla. Povezave se prekinejo samo, če to označiš.</p>";
+            } else {
+              sessHtml = "<p class='muted'>Ni povezanih sej.</p>";
+            }
+            var safety = p.safety_backup
+              ? "<p>Varnostna kopija trenutne TROPS je v:</p><p><code>" + esc(p.safety_backup) + "</code></p>"
+              : "<p class='muted'>Varnostna kopija trenutne TROPS ni nastala (baza še ne obstaja ali ni priklopljena).</p>";
+            var killSess = false;
+            return confirmDialog({
+              title: "Obnova baze TROPS", danger: true, ok: "Da, obnovi TROPS", icon: "alert", wide: true,
+              html: "<p>RESTORE prepiše SQL bazo <b>" + esc(p.database || "TROPS") + "</b> na strežniku <b>" + srv + "</b>.</p>" +
+                "<p>Pot kopije:<br><code>" + esc(p.bak || cand) + "</code></p>" +
+                (p.backup_set ? "<p>Kopija v BAK: " + esc(p.backup_set) + "</p>" : "") +
+                safety + sessHtml +
+                "<p class='muted'>Trenutni podatki v TROPS bodo zamenjani (REPLACE). Če kaj ne gre, uporabi varnostno kopijo zgoraj.</p>",
+              validate: function () {
+                if (sess.length) {
+                  var box = document.getElementById("mKillSess");
+                  killSess = !!(box && box.checked);
+                  if (!killSess) {
+                    toast("Označi 'Prekini povezave in obnovi' ali počakaj, da se seje končajo.", "warn");
+                    return false;
+                  }
+                }
+                return true;
+              }
+            }).then(function (yes) {
               if (!yes) return;
-              return confirmDialog({ title: "Zadnja potrditev", danger: true, ok: "Da, obnovi TROPS", html: "<p>Res obnovim TROPS na <b>" + srvLabel + "</b> iz <b>" + esc(cand.split(/[\\/]/).pop()) + "</b>? Tega ni mogoče razveljaviti.</p>" });
-            })
-            .then(function (yes2) {
-              if (!yes2) return;
-              runJob("integra_restore", { candidate: cand, confirm: true }, "Obnova TROPS (RESTORE)").then(function (r) { report(r, "TROPS obnovljen."); });
+              return runJob("integra_restore", {
+                candidate: cand,
+                confirm: true,
+                disconnect_sessions: killSess,
+                safety_backup: p.safety_backup || ""
+              }, "Obnova TROPS (RESTORE)").then(function (r) { report(r, "TROPS obnovljen."); });
             });
+          });
           return false;
         } }],
       });
