@@ -6,6 +6,26 @@ from types import SimpleNamespace
 import pytest
 
 
+def _mock_sql_target(monkeypatch):
+    """Brez pravega sqlcmd/pyodbc: fiksni cilj SQLEXPRESS / TROPS."""
+    import trops_studio.integra_sql as sql_mod
+    from trops_studio.integra_sql import TropsSqlTarget
+
+    target = TropsSqlTarget(
+        server="BRACO-NUC\\SQLEXPRESS",
+        database="TROPS",
+        data_file="C:\\x\\TROPS_Data.MDF",
+        log_file="C:\\x\\TROPS_Log.LDF",
+    )
+    monkeypatch.setattr(
+        sql_mod, "resolve_integra_sql_server", lambda: ("BRACO-NUC\\SQLEXPRESS", "DSN Trops")
+    )
+    monkeypatch.setattr(sql_mod, "discover_trops_targets", lambda: [target])
+    monkeypatch.setattr(sql_mod, "preferred_trops_target", lambda targets: targets[0])
+    return target
+
+
+
 def _setup_companies(motor, data_dir):
     motor.companies = [
         {"Zšt": "21", "Kratko ime": "PROJEST test", "Org_ID": "179531"},
@@ -31,6 +51,7 @@ def _close_motor(motor) -> None:
 
 def test_kisanal_writes_to_zst20_when_projest_selected(empty_motor, data_dir, monkeypatch):
     """Uvoz Integre gre v zst-20, tudi če je izbran Prejest (21). Brez pravega SQL."""
+    _mock_sql_target(monkeypatch)
     import trops_studio.integra_irpr as irpr_mod
     import trops_studio.integra_kisanal as kis_mod
 
@@ -77,6 +98,7 @@ def test_kisanal_writes_to_zst20_when_projest_selected(empty_motor, data_dir, mo
 
 
 def test_kisanal_report_uses_ir_pr_fields_not_ir_count(empty_motor, data_dir, monkeypatch):
+    _mock_sql_target(monkeypatch)
     import trops_studio.integra_irpr as irpr_mod
     import trops_studio.integra_kisanal as kis_mod
 
@@ -101,7 +123,8 @@ def test_kisanal_report_uses_ir_pr_fields_not_ir_count(empty_motor, data_dir, mo
     _close_motor(m)
 
 
-def test_integra_info_lists_company_20_target(empty_motor, data_dir):
+def test_integra_info_lists_company_20_target(empty_motor, data_dir, monkeypatch):
+    _mock_sql_target(monkeypatch)
     m = empty_motor
     _setup_companies(m, data_dir)
     info = m.integra_info()
@@ -113,6 +136,7 @@ def test_integra_info_lists_company_20_target(empty_motor, data_dir):
 
 
 def test_kisanal_refreshes_only_when_company_20_is_active(empty_motor, data_dir, monkeypatch):
+    _mock_sql_target(monkeypatch)
     import trops_studio.integra_irpr as irpr_mod
     import trops_studio.integra_kisanal as kis_mod
 

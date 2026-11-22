@@ -845,6 +845,8 @@
         html: "<div class='formGrid'><label class='fld span2'><span>SQL mapa</span><input id='mSqlDir' value='" + esc(info.sql_dir || "") + "'></label>" +
           "<div class='fld'><span>&nbsp;</span><div class='row'><button class='btn sm' id='mPickDir'>" + icon("folder") + "Izberi…</button><button class='btn sm' id='mSaveDir'>Shrani</button></div></div></div>" +
           "<div class='formSec'>Varnostne kopije (" + files.length + ")</div><div class='radioList'>" + list + "</div>" +
+          "<p class='muted'>SQL strežnik: <b>" + esc(info.sql_server || "—") + "</b>" + (info.sql_server_source ? " (" + esc(info.sql_server_source) + ")" : "") + "</p>" +
+          (info.sql_server_error ? "<div class='alert warn'>" + esc(info.sql_server_error) + "</div>" : "") +
           "<div class='formSec'>UrejanjeKisanal → IR/PR</div>" +
           "<p class='muted'>Podatki se vedno zapišejo v podjetje 20" + (info.target_company ? " (" + esc(info.target_company) + ")" : "") + ":<br><code>" + esc(info.target_db_path || "") + "</code></p>" +
           "<div class='row'><label class='fld'><span>Leto</span><input id='mYear' inputmode='numeric' value='" + esc(info.year || (S.boot && S.boot.period && S.boot.period.year) || "") + "'></label>" +
@@ -853,12 +855,14 @@
           var sel = document.querySelector("input[name=mBak]:checked");
           if (!sel) { toast("Izberi varnostno kopijo.", "warn"); return false; }
           var cand = files[+sel.value];
+          if (!info.sql_server) { toast(info.sql_server_error || "SQL strežnik ni določen. Preveri DSN Trops.", "error"); return false; }
+          var srvLabel = esc(info.sql_server) + (info.sql_server_source ? " (" + esc(info.sql_server_source) + ")" : "");
           closeModal();
           confirmDialog({ title: "Obnova baze TROPS", danger: true, ok: "Nadaljuj", icon: "alert",
-            html: "<p>RESTORE prepiše SQL bazo <b>TROPS</b> z vsebino:</p><p><code>" + esc(cand) + "</code></p><p class='muted'>Trenutni podatki v TROPS bodo zamenjani.</p>" })
+            html: "<p>RESTORE prepiše SQL bazo <b>TROPS</b> na strežniku <b>" + srvLabel + "</b> z vsebino:</p><p><code>" + esc(cand) + "</code></p><p class='muted'>Trenutni podatki v TROPS bodo zamenjani.</p>" })
             .then(function (yes) {
               if (!yes) return;
-              return confirmDialog({ title: "Zadnja potrditev", danger: true, ok: "Da, obnovi TROPS", html: "<p>Res obnovim TROPS iz <b>" + esc(cand.split(/[\\/]/).pop()) + "</b>? Tega ni mogoče razveljaviti.</p>" });
+              return confirmDialog({ title: "Zadnja potrditev", danger: true, ok: "Da, obnovi TROPS", html: "<p>Res obnovim TROPS na <b>" + srvLabel + "</b> iz <b>" + esc(cand.split(/[\\/]/).pop()) + "</b>? Tega ni mogoče razveljaviti.</p>" });
             })
             .then(function (yes2) {
               if (!yes2) return;
@@ -878,6 +882,9 @@
         runJob("integra_kisanal", { year: y }, "UrejanjeKisanal " + y).then(function (r) {
           if (!report(r, "UrejanjeKisanal prebran.")) return;
           var lines = [];
+          if (r.server) {
+            lines.push("SQL strežnik: " + r.server + (r.sql_server_source ? " (" + r.sql_server_source + ")" : "") + " / " + (r.database || "TROPS"));
+          }
           if (r.target_company || r.db_path) {
             lines.push("Cilj: " + (r.target_company || "podjetje 20") + (r.db_path ? "\n" + r.db_path : ""));
           }

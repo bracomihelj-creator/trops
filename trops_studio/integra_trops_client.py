@@ -5,7 +5,13 @@ from __future__ import annotations
 from contextlib import contextmanager
 from typing import Any, Iterator, Sequence
 
-from trops_studio.integra_sql import IntegraSqlError, TropsSqlTarget, discover_trops_targets
+from trops_studio.integra_sql import (
+    IntegraSqlError,
+    TropsSqlTarget,
+    discover_trops_targets,
+    preferred_trops_target,
+    resolve_integra_sql_server,
+)
 
 
 def _connect_string(server: str, database: str = "TROPS") -> str:
@@ -27,10 +33,11 @@ def open_trops_connection(trops: TropsSqlTarget | None = None) -> Iterator[Any]:
 
     target = trops
     if target is None:
+        server, source = resolve_integra_sql_server()
         targets = discover_trops_targets()
         if not targets:
-            raise IntegraSqlError("TROPS baze v SQL ni.")
-        target = targets[0]
+            raise IntegraSqlError(f"TROPS baze ni na {server} ({source}).")
+        target = preferred_trops_target(targets)
 
     try:
         conn = pyodbc.connect(

@@ -4,7 +4,7 @@ Vse poti na D:\ (Trops podatki, EvidencaFirm, KirKpr …) so zbrane tukaj.
 Privzete vrednosti so ENAKE kot v 4.0.01. Po želji jih prepišeš v
 ``settings.json`` (ali ``settings.local.json``) v korenu aplikacije, npr.::
 
-    {"trops_root": "D:\\Trops", "integra_sql_dir": "D:\\Trops\\20\\SQL"}
+    {"trops_root": "D:\\Trops", "integra_sql_dir": "D:\\Trops\\20\\SQL", "integra_sql_server": ""}
 
 Prazna ali manjkajoča vrednost = privzeto (baze: ``Trops_v5\\data``).
 """
@@ -49,6 +49,14 @@ def setting_path(key: str, default: Path | str) -> Path:
     if raw is None or not str(raw).strip():
         return Path(default)
     return Path(str(raw).strip())
+
+
+def setting_text(key: str, default: str = "") -> str:
+    """Okolje TROPS_<KLJUČ> > settings(.local).json > privzeto (niz, ne pot)."""
+    raw = os.environ.get(f"TROPS_{key.upper()}") or SETTINGS.get(key)
+    if raw is None or not str(raw).strip():
+        return default
+    return str(raw).strip()
 
 
 DATA_DIR = setting_path("data_dir", APP_ROOT / "data")
@@ -112,6 +120,8 @@ DEFAULT_MINIMAX_OUT = DEFAULT_TROPS / "MiniMax"
 # Integra (Zšt 20) — SQL TROPS backup / obdelava
 DEFAULT_INTEGRA_TROPS = TROPS_ROOT / "20"
 DEFAULT_INTEGRA_SQL = setting_path("integra_sql_dir", DEFAULT_INTEGRA_TROPS / "SQL")
+# Prazen niz = beri strežnik iz ODBC DSN Trops. Okolje TROPS_INTEGRA_SQL_SERVER premaga to.
+INTEGRA_SQL_SERVER = setting_text("integra_sql_server", "")
 DEFAULT_KONT_DBF = setting_path("kont_dbf", r"D:\Trops\dat\KONT2005.DBF")
 KONT_DBF_FALLBACKS = (TROPS_ROOT / "dat" / "KONT.DBF", TROPS_ROOT / "dat" / "KONTO.DBF")
 

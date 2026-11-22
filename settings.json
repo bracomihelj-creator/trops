@@ -1,8 +1,9 @@
 {
-  "_opis": "Trops Studio 5. Prazno = privzeto iz config.py. D:\\ poti so enake kot v4. data_dir privzeto kaže v Trops_v5/data (edine baze; prenesene iz v4 21.11.2026). Videz (Trops 4/5) in tema se shranita v settings.local.json.",
+  "_opis": "Trops Studio 5. Prazno = privzeto iz config.py. D:\\ poti so enake kot v4. data_dir privzeto kaže v Trops_v5/data (edine baze; prenesene iz v4 21.11.2026). Videz (Trops 4/5) in tema se shranita v settings.local.json. integra_sql_server prazen = ODBC DSN Trops (SQLEXPRESS).",
   "data_dir": "",
   "trops_root": "D:\\Trops",
   "evidenca_firm_root": "D:\\PISARNA\\Python\\EvidencaFirm",
   "kirkpr_cursor_root": "D:\\PISARNA\\Python\\KirKpr_convert_cursor",
-  "integra_sql_dir": "D:\\Trops\\20\\SQL"
+  "integra_sql_dir": "D:\\Trops\\20\\SQL",
+  "integra_sql_server": ""
 }

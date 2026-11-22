@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import shutil
 import subprocess
 import zipfile
@@ -186,32 +187,86 @@ def candidate_display(path: Path) -> tuple[str, str, str]:
     return kind, bak_txt, info
 
 
-def _odbc_trops_servers() -> list[str]:
-    """Strežniki iz ODBC DSN Trops/TROPS (če so na voljo)."""
-    found: list[str] = []
+def _trops_dsn_reg_paths() -> list[tuple[int, str]]:
+    """Poti registra za ODBC DSN Trops: 64-bit, WOW6432Node, HKLM in HKCU."""
     try:
-        import pyodbc  # type: ignore
+        import winreg
+    except ImportError:
+        return []
+    rel = [
+        r"SOFTWARE\ODBC\ODBC.INI\Trops",
+        r"SOFTWARE\WOW6432Node\ODBC\ODBC.INI\Trops",
+    ]
+    paths: list[tuple[int, str]] = []
+    for hive in (winreg.HKEY_LOCAL_MACHINE, winreg.HKEY_CURRENT_USER):
+        for sub in rel:
+            paths.append((hive, sub))
+    return paths
 
-        sources = pyodbc.dataSources()
-        for name, driver in sources.items():
-            if name.casefold() not in {"trops"}:
-                continue
-            # Poskusi prebrati Server iz registrov prek powershell — fallback spodaj.
-            _ = driver
-    except Exception:
-        pass
-    # Znani lokalni kandidati (ODBC Trops → BRACO-NUC\SQLEXPRESS)
-    for server in (
-        r"BRACO-NUC\SQLEXPRESS",
-        r".\SQLEXPRESS",
-        "BRACO-NUC",
-        ".",
-        "localhost",
-        r"localhost\SQLEXPRESS",
-    ):
-        if server not in found:
-            found.append(server)
-    return found
+
+def read_trops_dsn_server(*, _open_key=None, _query_value=None) -> str | None:
+    """Preberi Server iz ODBC DSN Trops v registru (64-bit in WOW6432Node)."""
+    try:
+        import winreg
+    except ImportError:
+        return None
+    open_key = _open_key or winreg.OpenKey
+    query_value = _query_value or winreg.QueryValueEx
+    for hive, sub in _trops_dsn_reg_paths():
+        try:
+            with open_key(hive, sub) as key:
+                value, _typ = query_value(key, "Server")
+        except OSError:
+            continue
+        server = str(value or "").strip()
+        if server:
+            return server
+    return None
+
+
+def resolve_integra_sql_server() -> tuple[str, str]:
+    """Izbrani SQL strežnik in vir ('settings' ali 'DSN Trops').
+
+    Če strežnik ni določen, je to napaka — ni tihega prehoda
+    na privzeto instanco (BRACO-NUC, localhost, .).
+    """
+    raw = os.environ.get("TROPS_INTEGRA_SQL_SERVER")
+    if raw is None or not str(raw).strip():
+        from trops_studio.config import SETTINGS
+
+        raw = SETTINGS.get("integra_sql_server")
+    if raw is not None and str(raw).strip():
+        return str(raw).strip(), "settings"
+    dsn = read_trops_dsn_server()
+    if dsn:
+        return dsn, "DSN Trops"
+    raise IntegraSqlError(
+        "SQL strežnik za Integro ni določen. "
+        "Nastavi ODBC DSN Trops (Server v registru) ali ključ "
+        "integra_sql_server v settings.json / spremenljivko "
+        "TROPS_INTEGRA_SQL_SERVER. Program ne preklopi na drugo instanco."
+    )
+
+
+def preferred_trops_target(targets: list[TropsSqlTarget]) -> TropsSqlTarget:
+    """Na izbranem strežniku vzemi bazo z natančnim imenom TROPS."""
+    if not targets:
+        raise IntegraSqlError("TROPS baze v SQL ni.")
+    exact = [t for t in targets if t.database.upper() == "TROPS"]
+    if len(exact) == 1:
+        return exact[0]
+    if len(exact) > 1:
+        names = ", ".join(t.label for t in exact)
+        raise IntegraSqlError(
+            "Na izbranem strežniku je več baz z imenom TROPS:\n" + names
+        )
+    if len(targets) == 1:
+        return targets[0]
+    names = ", ".join(t.label for t in targets)
+    raise IntegraSqlError(
+        "Na izbranem strežniku je več baz, ki vsebujejo TROPS, "
+        "nobena pa nima natančnega imena TROPS:\n" + names
+    )
 
 
 def _sqlcmd_query(
@@ -251,11 +306,11 @@ def _sqlcmd_query(
 
 def discover_trops_targets() -> list[TropsSqlTarget]:
     """
-    Poišči baze TROPS na lokalnih SQL instancah.
-    Če jih je več, UI ponudi izbiro.
+    Poišči baze TROPS na izbranem SQL strežniku (DSN Trops ali nastavitev).
+    Če jih je več, preferred_trops_target izbere natančno ime TROPS.
     """
+    server, _source = resolve_integra_sql_server()
     by_key: dict[str, TropsSqlTarget] = {}
-    errors: list[str] = []
 
     db_q = (
         "SET NOCOUNT ON; "
@@ -269,51 +324,38 @@ def discover_trops_targets() -> list[TropsSqlTarget]:
         "WHERE UPPER(db_name(database_id)) LIKE '%TROPS%';"
     )
 
-    for server in _odbc_trops_servers():
-        try:
-            out = _sqlcmd_query(server, db_q)
-        except IntegraSqlError as exc:
-            errors.append(str(exc))
+    out = _sqlcmd_query(server, db_q)
+    for line in out.splitlines():
+        line = line.strip()
+        if not line or line.startswith("-") or "|" not in line:
             continue
-        for line in out.splitlines():
-            line = line.strip()
-            if not line or line.startswith("-") or "|" not in line:
-                continue
-            parts = [p.strip() for p in line.split("|")]
-            if len(parts) < 2:
-                continue
-            srv, db = parts[0], parts[1]
-            if not srv or not db or db.upper() == "NAME":
-                continue
-            target = TropsSqlTarget(server=srv, database=db)
-            by_key[target.key] = target
-
-        try:
-            fout = _sqlcmd_query(server, file_q)
-        except IntegraSqlError:
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) < 2:
             continue
-        for line in fout.splitlines():
-            line = line.strip()
-            if not line or "|" not in line:
-                continue
-            parts = [p.strip() for p in line.split("|")]
-            if len(parts) < 4:
-                continue
-            srv, db, typ, phys = parts[0], parts[1], parts[2], parts[3]
-            key = f"{srv.casefold()}|{db.casefold()}"
-            target = by_key.get(key) or TropsSqlTarget(server=srv, database=db)
-            if typ.upper() == "ROWS":
-                target.data_file = phys
-            elif typ.upper() == "LOG":
-                target.log_file = phys
-            by_key[key] = target
+        srv, db = parts[0], parts[1]
+        if not srv or not db or db.upper() == "NAME":
+            continue
+        target = TropsSqlTarget(server=srv, database=db)
+        by_key[target.key] = target
 
-    targets = sorted(by_key.values(), key=lambda t: (t.server.casefold(), t.database.casefold()))
-    if not targets and errors:
-        raise IntegraSqlError(
-            "TROPS baze nisem našel.\n\n" + "\n".join(errors[:4])
-        )
-    return targets
+    fout = _sqlcmd_query(server, file_q)
+    for line in fout.splitlines():
+        line = line.strip()
+        if not line or "|" not in line:
+            continue
+        parts = [p.strip() for p in line.split("|")]
+        if len(parts) < 4:
+            continue
+        srv, db, typ, phys = parts[0], parts[1], parts[2], parts[3]
+        key = f"{srv.casefold()}|{db.casefold()}"
+        target = by_key.get(key) or TropsSqlTarget(server=srv, database=db)
+        if typ.upper() == "ROWS":
+            target.data_file = phys
+        elif typ.upper() == "LOG":
+            target.log_file = phys
+        by_key[key] = target
+
+    return sorted(by_key.values(), key=lambda t: (t.server.casefold(), t.database.casefold()))
 
 
 DETACHED_DATA_NAME = "TROPS_Data.MDF"
@@ -322,34 +364,31 @@ DETACHED_LOG_NAME = "TROPS_Log.LDF"
 
 def find_detached_trops_targets(database: str = "TROPS") -> list[TropsSqlTarget]:
     """
-    TROPS ni priklopljen v SQL: cilj = privzeta DATA/LOG mapa instance.
-    Če TROPS_Data.MDF že obstaja na kateri instanci, vrni samo te.
+    TROPS ni priklopljen v SQL: cilj = privzeta DATA/LOG mapa izbranega strežnika.
+    Če TROPS_Data.MDF že obstaja, vrni samo ta cilj.
     """
+    server, _source = resolve_integra_sql_server()
     q = (
         "SET NOCOUNT ON; "
         "SELECT @@SERVERNAME, "
         "CAST(SERVERPROPERTY('InstanceDefaultDataPath') AS nvarchar(400)), "
         "CAST(SERVERPROPERTY('InstanceDefaultLogPath') AS nvarchar(400));"
     )
+    out = _sqlcmd_query(server, q)
     by_server: dict[str, TropsSqlTarget] = {}
-    for server in _odbc_trops_servers():
-        try:
-            out = _sqlcmd_query(server, q)
-        except IntegraSqlError:
+    for line in out.splitlines():
+        parts = [p.strip() for p in line.strip().split("|")]
+        if len(parts) < 3 or not parts[0] or not parts[1]:
             continue
-        for line in out.splitlines():
-            parts = [p.strip() for p in line.strip().split("|")]
-            if len(parts) < 3 or not parts[0] or not parts[1]:
-                continue
-            srv, data_dir, log_dir = parts[0], parts[1], parts[2] or parts[1]
-            if srv.casefold() in by_server:
-                continue
-            by_server[srv.casefold()] = TropsSqlTarget(
-                server=srv,
-                database=database,
-                data_file=str(Path(data_dir) / DETACHED_DATA_NAME),
-                log_file=str(Path(log_dir) / DETACHED_LOG_NAME),
-            )
+        srv, data_dir, log_dir = parts[0], parts[1], parts[2] or parts[1]
+        if srv.casefold() in by_server:
+            continue
+        by_server[srv.casefold()] = TropsSqlTarget(
+            server=srv,
+            database=database,
+            data_file=str(Path(data_dir) / DETACHED_DATA_NAME),
+            log_file=str(Path(log_dir) / DETACHED_LOG_NAME),
+        )
     targets = sorted(by_server.values(), key=lambda t: t.server.casefold())
     with_files = [t for t in targets if Path(t.data_file).is_file()]
     return with_files or targets

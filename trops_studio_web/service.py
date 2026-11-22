@@ -1130,15 +1130,22 @@ class AppService:
     def integra_info(self) -> dict[str, Any]:
         with self._lock:
             from trops_studio.integra_sql import (
+                IntegraSqlError,
                 list_sql_bak_files,
                 list_sql_bck_candidates,
                 resolve_integra_sql_dir,
+                resolve_integra_sql_server,
             )
 
             sql_dir = resolve_integra_sql_dir(self.integra_sql_dir)
             zips = [str(p) for p in list_sql_bck_candidates(sql_dir)]
             baks = [str(p) for p in list_sql_bak_files(sql_dir)]
             company20 = find_company(self.companies, "zst-20")
+            try:
+                sql_server, sql_server_source = resolve_integra_sql_server()
+                sql_server_error = ""
+            except IntegraSqlError as exc:
+                sql_server, sql_server_source, sql_server_error = "", "", str(exc)
             return _safe(
                 {
                     "ok": True,
@@ -1149,6 +1156,9 @@ class AppService:
                     "target_zst": "20",
                     "target_company": company_name(company20) if company20 else "Integra (Zšt 20)",
                     "target_db_path": str(company_db_path(20)),
+                    "sql_server": sql_server,
+                    "sql_server_source": sql_server_source,
+                    "sql_server_error": sql_server_error,
                 }
             )
 
@@ -1162,16 +1172,29 @@ class AppService:
         """Obnovi TROPS iz ZIP/BAK — kliče obstoječo integra_sql logiko."""
         with self._lock:
             from trops_studio.integra_sql import (
+                IntegraSqlError,
                 discover_trops_targets,
+                find_detached_trops_targets,
+                preferred_trops_target,
                 razpakiraj_in_restore,
                 resolve_integra_sql_dir,
+                resolve_integra_sql_server,
             )
 
             sql_dir = resolve_integra_sql_dir(self.integra_sql_dir)
-            targets = discover_trops_targets()
-            if not targets:
-                return {"ok": False, "error": "TROPS v SQL ni najden."}
-            trops = targets[0]
+            try:
+                server, server_source = resolve_integra_sql_server()
+                targets = discover_trops_targets()
+                if not targets:
+                    targets = find_detached_trops_targets(database="TROPS")
+                if not targets:
+                    return {
+                        "ok": False,
+                        "error": f"TROPS v SQL ni najden na {server} ({server_source}).",
+                    }
+                trops = preferred_trops_target(targets)
+            except IntegraSqlError as exc:
+                return {"ok": False, "error": str(exc)}
 
             if not candidate:
                 raise ValueError("Najprej izberi ZIP/BAK datoteko.")
@@ -1187,6 +1210,9 @@ class AppService:
                     "ok": True,
                     "prepared": str(prepared),
                     "restored": str(restored),
+                    "server": trops.server,
+                    "database": trops.database,
+                    "sql_server_source": server_source,
                 }
             )
 
@@ -1200,12 +1226,32 @@ class AppService:
             company20 = find_company(self.companies, "zst-20")
             company20_name = company_name(company20) if company20 else "Integra (Zšt 20)"
             org_id = company_org_id(company20) if company20 else None
+            from trops_studio.integra_sql import (
+                IntegraSqlError,
+                discover_trops_targets,
+                preferred_trops_target,
+                resolve_integra_sql_server,
+            )
+
+            try:
+                server, server_source = resolve_integra_sql_server()
+                targets = discover_trops_targets()
+                if not targets:
+                    return {
+                        "ok": False,
+                        "error": f"TROPS baze ni na {server} ({server_source}).",
+                    }
+                trops = preferred_trops_target(targets)
+            except IntegraSqlError as exc:
+                return {"ok": False, "error": str(exc)}
+
             try:
                 result = urejanje_kisanal_to_sqlite(
                     db_path=db_path,
                     year=y,
                     date_from=self.filter_from_date,
                     date_to=self.filter_to_date,
+                    trops=trops,
                 )
             except Exception as exc:
                 return {"ok": False, "error": str(exc)}
@@ -1260,6 +1306,9 @@ class AppService:
                     "target_company": company20_name,
                     "active_is_target": active_zst == "20",
                     "refreshed": refreshed,
+                    "server": trops.server,
+                    "database": trops.database,
+                    "sql_server_source": server_source,
                 }
             )
 

@@ -404,6 +404,16 @@ class Motor(AccountsPartiesMixin, AppService):
         info = super().integra_info()
         n = len(info.get("candidates") or []) + len(info.get("baks") or [])
         info["status"] = f"Najdenih kopij: {n}" if n else "V SQL mapi ni ZIP/BAK kopij."
+        if info.get("sql_server"):
+            src = info.get("sql_server_source") or ""
+            info["status"] = (
+                f"Strežnik: {info['sql_server']}"
+                + (f" ({src})" if src else "")
+                + ". "
+                + info["status"]
+            )
+        elif info.get("sql_server_error"):
+            info["status"] = str(info["sql_server_error"])
         info["year"] = self.filter_from_date.year
         return info
 
@@ -414,7 +424,12 @@ class Motor(AccountsPartiesMixin, AppService):
             raise BadRequest("Izberi eno od najdenih ZIP/BAK kopij v SQL mapi.")
         res = super().integra_restore(candidate)
         if res.get("ok"):
-            res["msg"] = f"RESTORE uspešen: {Path(candidate).name}"
+            server = res.get("server") or ""
+            db = res.get("database") or "TROPS"
+            src = res.get("sql_server_source") or ""
+            res["msg"] = f"RESTORE uspešen: {Path(candidate).name} na {server} / {db}"
+            if src:
+                res["msg"] += f" ({src})"
         return res
 
     def integra_kisanal(self, year: Any = "") -> dict[str, Any]:
