@@ -1138,6 +1138,7 @@ class AppService:
             sql_dir = resolve_integra_sql_dir(self.integra_sql_dir)
             zips = [str(p) for p in list_sql_bck_candidates(sql_dir)]
             baks = [str(p) for p in list_sql_bak_files(sql_dir)]
+            company20 = find_company(self.companies, "zst-20")
             return _safe(
                 {
                     "ok": True,
@@ -1145,6 +1146,9 @@ class AppService:
                     "candidates": zips,
                     "baks": baks,
                     "auto_irpr": self.integra_auto_irpr,
+                    "target_zst": "20",
+                    "target_company": company_name(company20) if company20 else "Integra (Zšt 20)",
+                    "target_db_path": str(company_db_path(20)),
                 }
             )
 
@@ -1192,9 +1196,13 @@ class AppService:
             from trops_studio.integra_irpr import import_kisanal_to_ir_pr
 
             y = int(year) if str(year).strip().isdigit() else self.filter_from_date.year
+            db_path = company_db_path(20)
+            company20 = find_company(self.companies, "zst-20")
+            company20_name = company_name(company20) if company20 else "Integra (Zšt 20)"
+            org_id = company_org_id(company20) if company20 else None
             try:
                 result = urejanje_kisanal_to_sqlite(
-                    db_path=Path(self.db.path),
+                    db_path=db_path,
                     year=y,
                     date_from=self.filter_from_date,
                     date_to=self.filter_to_date,
@@ -1203,30 +1211,55 @@ class AppService:
                 return {"ok": False, "error": str(exc)}
             irpr = None
             if self.integra_auto_irpr:
+                target_db = None
                 try:
+                    active_zst = company_zst(self.active_company) if self.active_company else ""
+                    if (
+                        active_zst == "20"
+                        and Path(self.db.path).resolve() == db_path.resolve()
+                    ):
+                        irpr_db = self.db
+                    else:
+                        target_db = Database(db_path)
+                        irpr_db = target_db
                     irpr_res = import_kisanal_to_ir_pr(
-                        self.db,
+                        irpr_db,
                         date_from=self.filter_from_date,
                         date_to=self.filter_to_date,
-                        org_id=company_org_id(self.active_company) if self.active_company else None,
+                        org_id=org_id,
                     )
                     irpr = {
                         "message": getattr(irpr_res, "message", str(irpr_res)),
-                        "ir": getattr(irpr_res, "ir_count", None),
-                        "pr": getattr(irpr_res, "pr_count", None),
+                        "ir": int(getattr(irpr_res, "ir", 0) or 0),
+                        "pr": int(getattr(irpr_res, "pr", 0) or 0),
                     }
                 except Exception as exc:
                     irpr = {"error": str(exc)}
-            self.refresh_all()
+                finally:
+                    if target_db is not None:
+                        try:
+                            target_db.close()
+                        except Exception:
+                            pass
+            active_zst = company_zst(self.active_company) if self.active_company else ""
+            refreshed = False
+            if active_zst == "20":
+                self.refresh_all()
+                refreshed = True
             return _safe(
                 {
                     "ok": True,
                     "kisanal": {
                         "message": getattr(result, "message", str(result)),
                         "year": getattr(result, "year", y),
-                        "db_path": str(getattr(result, "db_path", self.db.path)),
+                        "db_path": str(getattr(result, "db_path", db_path)),
                     },
                     "irpr": irpr,
+                    "db_path": str(db_path),
+                    "target_zst": "20",
+                    "target_company": company20_name,
+                    "active_is_target": active_zst == "20",
+                    "refreshed": refreshed,
                 }
             )
 

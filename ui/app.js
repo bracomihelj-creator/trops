@@ -845,7 +845,9 @@
         html: "<div class='formGrid'><label class='fld span2'><span>SQL mapa</span><input id='mSqlDir' value='" + esc(info.sql_dir || "") + "'></label>" +
           "<div class='fld'><span>&nbsp;</span><div class='row'><button class='btn sm' id='mPickDir'>" + icon("folder") + "Izberi…</button><button class='btn sm' id='mSaveDir'>Shrani</button></div></div></div>" +
           "<div class='formSec'>Varnostne kopije (" + files.length + ")</div><div class='radioList'>" + list + "</div>" +
-          "<div class='formSec'>UrejanjeKisanal → IR/PR</div><div class='row'><label class='fld'><span>Leto</span><input id='mYear' inputmode='numeric' value='" + esc(info.year || (S.boot && S.boot.period && S.boot.period.year) || "") + "'></label>" +
+          "<div class='formSec'>UrejanjeKisanal → IR/PR</div>" +
+          "<p class='muted'>Podatki se vedno zapišejo v podjetje 20" + (info.target_company ? " (" + esc(info.target_company) + ")" : "") + ":<br><code>" + esc(info.target_db_path || "") + "</code></p>" +
+          "<div class='row'><label class='fld'><span>Leto</span><input id='mYear' inputmode='numeric' value='" + esc(info.year || (S.boot && S.boot.period && S.boot.period.year) || "") + "'></label>" +
           "<button class='btn' id='mKisanal'>" + icon("db") + "Preberi UrejanjeKisanal</button></div>",
         buttons: [{ label: "Zapri" }, { label: "RESTORE izbrane kopije…", kind: "danger", icon: "db", onClick: function () {
           var sel = document.querySelector("input[name=mBak]:checked");
@@ -875,9 +877,21 @@
         closeModal();
         runJob("integra_kisanal", { year: y }, "UrejanjeKisanal " + y).then(function (r) {
           if (!report(r, "UrejanjeKisanal prebran.")) return;
-          var lines = [r.kisanal && r.kisanal.message, r.irpr && (r.irpr.message || r.irpr.error)].filter(Boolean);
+          var lines = [];
+          if (r.target_company || r.db_path) {
+            lines.push("Cilj: " + (r.target_company || "podjetje 20") + (r.db_path ? "\n" + r.db_path : ""));
+          }
+          if (r.kisanal && r.kisanal.message) lines.push(r.kisanal.message);
+          if (r.irpr && r.irpr.error) lines.push(r.irpr.error);
+          else if (r.irpr) {
+            var counts = "IR: " + (r.irpr.ir != null ? r.irpr.ir : "—") + " · PR: " + (r.irpr.pr != null ? r.irpr.pr : "—");
+            lines.push((r.irpr.message ? r.irpr.message + "\n" : "") + counts);
+          }
+          if (r.active_is_target === false) {
+            lines.push("Trenutno ni izbrano podjetje 20. Preklopi nanj, da vidiš uvoz.");
+          }
           if (lines.length) modal({ title: "UrejanjeKisanal", wide: true, html: "<div class='pre'>" + esc(lines.join("\n\n")) + "</div>" });
-          refreshAfter();
+          if (r.active_is_target) refreshAfter();
         });
       };
     });

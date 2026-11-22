@@ -420,7 +420,12 @@ class Motor(AccountsPartiesMixin, AppService):
     def integra_kisanal(self, year: Any = "") -> dict[str, Any]:
         res = super().integra_kisanal(year or self.filter_from_date.year)
         if res.get("ok"):
-            res["msg"] = str((res.get("kisanal") or {}).get("message") or "UrejanjeKisanal končan.").split("\n", 1)[0]
+            first = str((res.get("kisanal") or {}).get("message") or "UrejanjeKisanal končan.").split("\n", 1)[0]
+            dest = str(res.get("db_path") or "")
+            name = str(res.get("target_company") or "podjetje 20")
+            res["msg"] = f"{first} Cilj: {name}" + (f" ({dest})" if dest else ".")
+            if res.get("active_is_target") is False:
+                res["msg"] += " Preklopi na podjetje 20, da vidiš uvoz."
         return res
 
     # ------------------------------------------------------------ ostalo
