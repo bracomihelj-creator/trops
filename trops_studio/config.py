@@ -67,6 +67,42 @@ def company_db_path(zst: str | int | None) -> Path:
 
 
 TROPS_ROOT = setting_path("trops_root", r"D:\Trops")
+
+
+def company_trops_dir(zst: str | int | None) -> Path | None:
+    """Mapa podjetja `TROPS_ROOT\\<Zšt>` (npr. D:\\Trops\\21, D:\\Trops\\01).
+
+    Eno- in dvomestne Zšt so v mapi z vodilno ničlo (`01`, `02`, …).
+    Vrne pot samo, če mapa obstaja.
+    """
+    digits = re.sub(r"\D", "", str(zst or ""))
+    if not digits:
+        return None
+    n = int(digits)
+    root = Path(TROPS_ROOT)
+    padded = root / str(n).zfill(2)
+    unpadded = root / str(n)
+    for cand in (padded, unpadded):
+        if cand.is_dir():
+            return cand
+    return None
+
+
+def excel_import_initial_dir(zst: str | int | None, last_used: str | None = None) -> str:
+    """Privzeta mapa za uvoz Excela: `<trops_root>\\<Zšt>\\DDV`, sicer mapa podjetja, sicer *last_used*."""
+    company = company_trops_dir(zst)
+    if company is not None:
+        ddv = company / "DDV"
+        return str(ddv if ddv.is_dir() else company)
+    if last_used:
+        path = Path(str(last_used))
+        if path.is_dir():
+            return str(path)
+        if path.is_file():
+            return str(path.parent)
+    return "."
+
+
 DEFAULT_TROPS = TROPS_ROOT / "21"
 DEFAULT_IR_DARILA = DEFAULT_TROPS / "DDV" / "IF DARILA.xls"
 DEFAULT_IR_FITNES = DEFAULT_TROPS / "DDV" / "IF FITNES.xls"

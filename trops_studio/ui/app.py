@@ -41,6 +41,8 @@ from trops_studio.config import (
     DEFAULT_PR_EXPENSE_ACCOUNT,
     TROPS_ROOT,
     company_db_path,
+    company_trops_dir,
+    excel_import_initial_dir,
 )
 from trops_studio.db import Database
 from trops_studio.excel_map import import_vasco_files_to_db
@@ -3162,6 +3164,10 @@ class ProjestStudioApp:
         selected = filedialog.askopenfilename(
             parent=self.root,
             filetypes=(("Excel", "*.xls *.xlsx *.xlsm"), ("Vse", "*.*")),
+            initialdir=excel_import_initial_dir(
+                company_zst(self.active_company or {}),
+                variable.get().strip() or None,
+            ),
         )
         if selected:
             variable.set(selected)
@@ -4026,6 +4032,7 @@ class ProjestStudioApp:
             rec = self.db.get_last_vasco_import()
         except Exception:
             pass
+        last_used = ""
         for raw in (
             rec.get("zip") and str(Path(str(rec.get("zip"))).parent),
             rec.get("dir"),
@@ -4036,21 +4043,21 @@ class ProjestStudioApp:
                 continue
             path = Path(str(raw))
             if path.is_dir():
-                return str(path)
+                last_used = str(path)
+                break
             if path.is_file():
-                return str(path.parent)
-        return "."
+                last_used = str(path.parent)
+                break
+        return excel_import_initial_dir(company_zst(self.active_company or {}), last_used or None)
 
     def _kirkpr_initial_dir(self) -> str:
         """Privzeta mapa FURS ZIP: D:\\Trops\\{Zšt}\\DDV (ali KIRKPR_Minimax)."""
-        from trops_studio.config import TROPS_ROOT
-
-        zst = company_zst(self.active_company or {})
-        if zst:
+        root = company_trops_dir(company_zst(self.active_company or {}))
+        if root is not None:
             for cand in (
-                TROPS_ROOT / zst / "DDV" / "KIRKPR_Minimax",
-                TROPS_ROOT / zst / "DDV",
-                TROPS_ROOT / zst,
+                root / "DDV" / "KIRKPR_Minimax",
+                root / "DDV",
+                root,
             ):
                 if cand.is_dir():
                     return str(cand)
